@@ -43,6 +43,7 @@ class WorkflowEntity(Base):
     inputs = Column(Text, default='')
     parameters = Column(Text, default='')
     final_output = Column(Text, default='')
+    apps = Column(Text, default='')
     public = Column(Boolean, default=False)
     enable = Column(Boolean, default=True)
     created = Column(DateTime, default=datetime.datetime.now)
@@ -91,6 +92,7 @@ class StepEntity(Base):
     template = Column(Text, default='')
     exec_context = Column(String, default='local')
     exec_method = Column(String, default='auto')
+    exec_parameters = Column(Text, default='')
 
 
 class JobEntity(Base):
@@ -115,6 +117,7 @@ class JobEntity(Base):
     final_output = Column(Text, default='')
     exec_context = Column(Text, default='')
     exec_method = Column(Text, default='')
+    exec_parameters = Column(Text, default='')
     notifications = Column(Text, default='[]')
 
 
@@ -269,6 +272,7 @@ class DataSource:
                 JobEntity.final_output,
                 JobEntity.exec_context,
                 JobEntity.exec_method,
+                JobEntity.exec_parameters,
                 JobEntity.notifications
             ).\
                 filter(JobEntity.id == job_id).\
@@ -290,9 +294,10 @@ class DataSource:
                     'final_output': json.loads(row[10]),
                     'execution': {
                         'context': json.loads(row[11]),
-                        'method': json.loads(row[12])
+                        'method': json.loads(row[12]),
+                        'parameters': json.loads(row[13])
                     },
-                    'notifications': json.loads(row[13])
+                    'notifications': json.loads(row[14])
                 } for row in result
             ]
 
@@ -360,7 +365,8 @@ class DataSource:
                 StepEntity.map_regex,
                 StepEntity.template,
                 StepEntity.exec_context,
-                StepEntity.exec_method
+                StepEntity.exec_method,
+                StepEntity.exec_parameters
             ).\
                 filter(StepEntity.workflow_id == workflow_id).\
                 filter(StepEntity.app_id == AppEntity.id).\
@@ -381,7 +387,8 @@ class DataSource:
                     'template': json.loads(row[8]),
                     'execution': {
                         'context': row[9],
-                        'method': row[10]
+                        'method': row[10],
+                        'parameters': json.loads(row[11])
                     },
                     'depend': []
                 } for row in result
@@ -430,6 +437,7 @@ class DataSource:
                 WorkflowEntity.inputs,
                 WorkflowEntity.parameters,
                 WorkflowEntity.final_output,
+                WorkflowEntity.apps,
                 WorkflowEntity.public,
                 WorkflowEntity.enable
             ).\
@@ -448,8 +456,9 @@ class DataSource:
                     'inputs': json.loads(row[7]),
                     'parameters': json.loads(row[8]),
                     'final_output': json.loads(row[9]),
-                    'public': row[10],
-                    'enable': row[11],
+                    'apps': json.loads(row[10]),
+                    'public': row[11],
+                    'enable': row[12],
                     'steps': {}
                 } for row in result
             ]
@@ -624,6 +633,7 @@ class DataSource:
                 inputs=data['inputs'],
                 parameters=data['parameters'],
                 final_output=data['final_output'],
+                apps=data['apps'],
                 public=data['public'],
                 enable=data['enable'],
                 created=None,
@@ -1065,7 +1075,7 @@ class DataSource:
             data: a dictionary with the current keys:
                   ['workflow_id', 'app_id', 'name', 'number',
                   'letter', 'map_uri', 'map_regex','template',
-                  'exec_context', 'exec_method']
+                  'exec_context', 'exec_method', 'exec_parameters']
 
         Returns:
             On success: step id of the added StepEntity object.
@@ -1085,7 +1095,8 @@ class DataSource:
                 map_regex=data['map_regex'],
                 template=data['template'],
                 exec_context=data['exec_context'],
-                exec_method=data['exec_method']
+                exec_method=data['exec_method'],
+                exec_parameters=data['exec_parameters']
             ))
         except SQLAlchemyError as err:
             Log.an().error('sql exception [%s]', str(err))
@@ -1260,7 +1271,7 @@ class DataSource:
             data: a dictionary with the following keys:
                   ['workflow_id', 'name', 'username', 'work_uri', 'no_output_hash',
                   'inputs', 'parameters', 'output_uri','final_output',
-                  'exec_context', 'exec_method']
+                  'exec_context', 'exec_method', 'exec_parameters']
         Returns:
             On success: id of the added job.
             On failure: False.
@@ -1281,6 +1292,7 @@ class DataSource:
                 final_output=data['final_output'],
                 exec_context=data['exec_context'],
                 exec_method=data['exec_method'],
+                exec_parameters=data['exec_parameters'],
                 notifications=data['notifications']
             ))
         except SQLAlchemyError as err:
@@ -1824,7 +1836,7 @@ class DataSource:
 
     def add_linked_apps(self, workflow_dict, base_path):
         """
-        Add apps referenced relatively from workflow defincition.
+        Add apps referenced relatively from workflow definition.
 
         Update workflow_dict to include new app IDs.
 
@@ -1846,10 +1858,11 @@ class DataSource:
                     # app not yet loaded
 
                     # import app definition
-                    if not os.path.isabs(step['app']):
-                        app_path = os.path.join(base_path, step['app'])
-                    else:
-                        app_path = step['app']
+                    #if not os.path.isabs(step['app']):
+                    #    app_path = os.path.join(base_path, step['app'])
+                    #else:
+                    #    app_path = step['app']
+                    app_path = os.path.join(base_path, 'apps', step['app'], 'app.yaml')
 
                     apps = self.import_apps_from_def(app_path)
                     if not apps:
@@ -1991,7 +2004,8 @@ class DataSource:
                 'map_regex': step['map']['regex'],
                 'template': json.dumps(step['template']),
                 'exec_context': step['execution']['context'],
-                'exec_method': step['execution']['method']
+                'exec_method': step['execution']['method'],
+                'exec_parameters': json.dumps(step['execution']['parameters'])
             })
             if not step_id:
                 Log.an().error('cannot add workflow step: %s', step_name)
@@ -2045,7 +2059,8 @@ class DataSource:
                         'map_regex': step['map']['regex'],
                         'template': json.dumps(step['template']),
                         'exec_context': step['execution']['context'],
-                        'exec_method': step['execution']['method']
+                        'exec_method': step['execution']['method'],
+                        'exec_parameters': json.dumps(step['execution']['parameters'])
                     }
             ):
                 Log.an().error(
@@ -2139,6 +2154,7 @@ class DataSource:
                 'description'       : valid_def['description'],
                 'username'          : valid_def['username'],
                 'inputs'            : json.dumps(valid_def['inputs']),
+                'apps'              : json.dumps(valid_def['apps']),
                 'repo_uri'          : valid_def['repo_uri'],
                 'documentation_uri' : valid_def['documentation_uri'],
                 'parameters'        : json.dumps(valid_def['parameters']),
@@ -2298,6 +2314,7 @@ class DataSource:
                     'inputs':            json.dumps(valid_def['inputs']),
                     'parameters':        json.dumps(valid_def['parameters']),
                     'final_output':      json.dumps(valid_def['final_output']),
+                    'apps':              json.dumps(valid_def['apps']),
                     'public':            valid_def['public'],
                     'enable':            valid_def['enable'],
                     'version':           valid_def['version']
@@ -2444,18 +2461,19 @@ class DataSource:
 
             # insert job record
             job_id = self.add_job({
-                'workflow_id'   : valid_def['workflow_id'],
-                'name'          : valid_def['name'],
-                'username'      : valid_def['username'],
-                'work_uri'      : json.dumps(valid_def['work_uri']),
+                'workflow_id': valid_def['workflow_id'],
+                'name': valid_def['name'],
+                'username': valid_def['username'],
+                'work_uri': json.dumps(valid_def['work_uri']),
                 'no_output_hash': valid_def['no_output_hash'],
-                'inputs'        : json.dumps(valid_def['inputs']),
-                'parameters'    : json.dumps(valid_def['parameters']),
-                'output_uri'    : valid_def['output_uri'],
-                'final_output'  : json.dumps(valid_def['final_output']),
-                'exec_context'  : json.dumps(valid_def['execution']['context']),
-                'exec_method'   : json.dumps(valid_def['execution']['method']),
-                'notifications' : json.dumps(valid_def['notifications'])
+                'inputs': json.dumps(valid_def['inputs']),
+                'parameters': json.dumps(valid_def['parameters']),
+                'output_uri': valid_def['output_uri'],
+                'final_output': json.dumps(valid_def['final_output']),
+                'exec_context': json.dumps(valid_def['execution']['context']),
+                'exec_method': json.dumps(valid_def['execution']['method']),
+                'exec_parameters': json.dumps(valid_def['execution']['parameters']),
+                'notifications': json.dumps(valid_def['notifications'])
             })
             if not job_id:
                 Log.an().error(

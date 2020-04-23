@@ -20,6 +20,7 @@ CREATE TABLE workflow (
     inputs TEXT NOT NULL DEFAULT '',
     parameters TEXT NOT NULL DEFAULT '',
     final_output TEXT NOT NULL DEFAULT '',
+    apps TEXT NOT NULL DEFAULT '',
     public TINYINT NOT NULL DEFAULT 0,
     enable TINYINT NOT NULL DEFAULT 1,
     created TIMESTAMP DEFAULT '0000-00-00 00:00:00',
@@ -67,6 +68,7 @@ CREATE TABLE step (
     template TEXT NOT NULL DEFAULT '',
     exec_context VARCHAR(256) NOT NULL DEFAULT 'local',
     exec_method VARCHAR(256) NOT NULL DEFAULT 'auto',
+    exec_parameters TEXT NOT NULL DEFAULT '',
     PRIMARY KEY (id)
 );
 
@@ -88,6 +90,7 @@ CREATE TABLE job (
     final_output TEXT NOT NULL DEFAULT '',
     exec_context TEXT NOT NULL DEFAULT '',
     exec_method TEXT NOT NULL DEFAULT '',
+    exec_parameters TEXT NOT NULL DEFAULT '',
     notifications TEXT NOT NULL DEFAULT '[]',
     PRIMARY KEY (id)
 );
