@@ -8,6 +8,7 @@ from geneflow.data_manager import DataManager
 from geneflow.log import Log
 from geneflow.uri_parser import URIParser
 from geneflow.workflow_input import WorkflowInput
+from geneflow.extend.contexts import Contexts
 
 
 class WorkflowDAGException(Exception):
@@ -24,6 +25,8 @@ class WorkflowDAG:
             apps,
             parsed_job_work_uri,
             parsed_job_output_uri,
+            exec_contexts,
+            data_contexts,
             config,
             **kwargs
     ):
@@ -40,8 +43,8 @@ class WorkflowDAG:
                     ...
                 }
             parsed_job_work_uri: dict of parsed job work URIs, one URI per
-                context.
-            parsed_job_output_uri: string of job output URI.
+                data context.
+            parsed_job_output_uri: job output URI.
             config: dict of workflow config
             **kwargs: additional arguments specific to contexts for this
                 workflow (e.g., local or agave arguments)
@@ -55,6 +58,8 @@ class WorkflowDAG:
         self._apps = apps
         self._parsed_job_work_uri = parsed_job_work_uri
         self._parsed_job_output_uri = parsed_job_output_uri
+        self._exec_contexts = exec_contexts
+        self._data_contexts = data_contexts
         self._config = config
 
         # flattened parameters (i.e., only key: value pairs)
@@ -71,7 +76,7 @@ class WorkflowDAG:
         # Step classes for each required context
         self._context_classes = {}
 
-        # additional args for specific contexts
+        # additional args for specific data or execution contexts
         self._context_options = kwargs
 
 
@@ -89,7 +94,7 @@ class WorkflowDAG:
             On failure: Raises WorkflowDAGException.
 
         """
-        for context in self._parsed_job_work_uri:
+        for context in self._exec_contexts | self._data_contexts:
             # set default empty values for context options
             if context not in self._context_options:
                 self._context_options[context] = {}
@@ -118,7 +123,7 @@ class WorkflowDAG:
             Log.an().error(msg)
             raise WorkflowDAGException(str(err)+'|'+msg) from err
 
-        # validate that graph is DAG
+        # validate that graph is a DAG
         if not nx.is_directed_acyclic_graph(self._graph):
             msg = 'graph contains cycles, check step dependencies'
             Log.an().error(msg)
@@ -262,7 +267,9 @@ class WorkflowDAG:
             On failure: Raises WorkflowDAGException.
 
         """
-        for context in self._parsed_job_work_uri:
+        # currently all data contexts also correspond to an exec context
+        # but this may change in the future
+        for context in self._exec_contexts | self._data_contexts:
 
             mod_name = '{}_step'.format(context)
             cls_name = '{}Step'.format(context.capitalize())
@@ -310,13 +317,14 @@ class WorkflowDAG:
         self._parsed_context_uris['inputs'] = {}
         self._parsed_context_uris['steps'] = {'final': {}}
 
-        # init contexts in parsed_job_work_uri for inputs and steps
-        for context in self._parsed_job_work_uri:
+        # init all data contexts
+        for context in {
+                Contexts.get_data_scheme_of_exec_context(con)
+                for con in self._exec_contexts
+        } | self._data_contexts:
 
             self._context_uris['inputs'][context] = {}
-            self._context_uris['steps'][context] = {}
             self._parsed_context_uris['inputs'][context] = {}
-            self._parsed_context_uris['steps'][context] = {}
 
             for node_name in self._topo_sort:
 
@@ -380,7 +388,18 @@ class WorkflowDAG:
                         self._parsed_context_uris['inputs'][context]\
                             [node['name']] = switched_uri
 
-                else: # node['type'] == 'step'
+        for context in {
+                Contexts.get_data_scheme_of_exec_context(con)
+                for con in self._exec_contexts
+        }:
+
+            self._context_uris['steps'][context] = {}
+            self._parsed_context_uris['steps'][context] = {}
+
+            for node_name in self._topo_sort:
+
+                node = self._graph.nodes[node_name]
+                if node['type'] == 'step':
                     self._context_uris['steps'][context][node['name']]\
                         = '{}/{}'.format(
                             self._parsed_job_work_uri[context]['chopped_uri'],
@@ -447,6 +466,7 @@ class WorkflowDAG:
                     type='input',
                     contexts={source_context: ''},
                     source_context=source_context,
+                    exec_context=None,
                     node=None
                 )
             except nx.NetworkXException as err:
@@ -460,9 +480,15 @@ class WorkflowDAG:
         for step_name, step in self._workflow['steps'].items():
 
             # extract the step source context
-            source_context = step['execution']['context']
+            source_data_context = Contexts.get_data_scheme_of_exec_context(step['execution']['context'])
+            if not source_data_context:
+                msg = 'invalid execution context ({}) for step {}'.format(
+                    step['execution']['context'], step_name
+                )
+                Log.an().error(msg)
+                raise WorkflowDAGException(msg)
 
-            contexts = {source_context: ''}
+            contexts = {source_data_context: ''}
             if step_name in self._workflow['final_output']:
                 contexts['final'] = ''
 
@@ -473,7 +499,8 @@ class WorkflowDAG:
                     type='step',
                     step=step,
                     contexts=contexts,
-                    source_context=source_context,
+                    source_context=source_data_context,
+                    exec_context=step['execution']['context'],
                     node=None
                 )
             except nx.NetworkXException as err:
@@ -514,7 +541,7 @@ class WorkflowDAG:
 
                         # add context key to dict for input node
                         self._graph.nodes[input_node]['contexts'][
-                            step['execution']['context']
+                            Contexts.get_data_scheme_of_exec_context(step['execution']['context'])
                         ] = ''
 
                     else:
@@ -553,7 +580,7 @@ class WorkflowDAG:
 
                     # add context key to dict for depend node
                     self._graph.nodes[depend_node]['contexts'][
-                        step['execution']['context']
+                        Contexts.get_data_scheme_of_exec_context(step['execution']['context'])
                     ] = ''
 
 
@@ -632,7 +659,6 @@ class WorkflowDAG:
         for node_name in self._topo_sort:
             node = self._graph.nodes[node_name]
             if node['type'] == 'step':
-
                 # update source context URI
                 try:
                     node['contexts'][node['source_context']]\
@@ -663,7 +689,7 @@ class WorkflowDAG:
                             raise WorkflowDAGException(msg)
 
                 # create instance of WorkflowStep class depending on context
-                node['node'] = self._context_classes[node['source_context']](
+                node['node'] = self._context_classes[node['exec_context']](
                     self._job,
                     node['step'],
                     self._apps[node['step']['app_name']],
@@ -674,8 +700,8 @@ class WorkflowDAG:
                     node['contexts'],
                     node['source_context'],
                     **{
-                        node['source_context']:\
-                            self._context_options[node['source_context']]
+                        node['exec_context']:\
+                            self._context_options[node['exec_context']]
                     }
                 )
 
