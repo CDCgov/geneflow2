@@ -24,46 +24,6 @@ def init_subparser(subparsers):
         type=str,
         help='GeneFlow workflow definition or package directory'
     )
-    parser.add_argument(
-        '-j', '--job',
-        type=str,
-        default=None,
-        dest='job_path',
-        help='geneflow definition yaml for job(s)'
-    )
-    parser.add_argument(
-        '-o', '--output',
-        type=str,
-        required=True,
-        help='output folder'
-    )
-    parser.add_argument(
-        '-n', '--name',
-        type=str,
-        default='geneflow-job',
-        help='name of job'
-    )
-    parser.add_argument(
-        '--exec-context', '--ec',
-        type=str,
-        dest='exec_context',
-        action='append',
-        help='execution contexts'
-    )
-    parser.add_argument(
-        '--exec-method', '--em',
-        type=str,
-        dest='exec_method',
-        action='append',
-        help='execution methods'
-    )
-    parser.add_argument(
-        '--exec-param', '--ep',
-        type=str,
-        dest='exec_param',
-        action='append',
-        help='execution parameters'
-    )
     parser.set_defaults(func=run)
 
     return parser
@@ -150,6 +110,89 @@ def apply_job_modifiers(jobs_dict, job_mods):
             set_dict_key_list(job, keys, val)
 
 
+def parse_dynamic_args(other_args, workflow_dict):
+    """
+    Parse dynamic args based on workflow dictionary as well as
+    some static args.
+
+    Args:
+        other_args: List of remaining args from initial parse of
+            workflow path.
+        workflow_dict: Workflow dictionary
+
+    Returns:
+        On success: List of parsed arguments.
+        On failure: False.
+
+    """
+
+    # parse dynamic args. these are determined from workflow definition
+    dynamic_parser = argparse.ArgumentParser()
+
+    dynamic_parser.add_argument(
+        '-j', '--job',
+        type=str,
+        default=None,
+        dest='job_path',
+        help='geneflow definition yaml for job(s)'
+    )
+    dynamic_parser.add_argument(
+        '-o', '--output',
+        type=str,
+        required=True,
+        help='output folder'
+    )
+    dynamic_parser.add_argument(
+        '-n', '--name',
+        type=str,
+        default='geneflow-job',
+        help='name of job'
+    )
+    dynamic_parser.add_argument(
+        '--exec-context', '--ec',
+        type=str,
+        dest='exec_context',
+        action='append',
+        default=[],
+        help='execution contexts'
+    )
+    dynamic_parser.add_argument(
+        '--exec-method', '--em',
+        type=str,
+        dest='exec_method',
+        action='append',
+        default=[],
+        help='execution methods'
+    )
+    dynamic_parser.add_argument(
+        '--exec-param', '--ep',
+        type=str,
+        dest='exec_param',
+        action='append',
+        default=[],
+        help='execution parameters'
+    )
+
+    for input_key in workflow_dict['inputs']:
+        dynamic_parser.add_argument(
+            '--in.{}'.format(input_key),
+            dest='inputs.{}'.format(input_key),
+            required=False,
+            default=workflow_dict['inputs'][input_key]['default']
+        )
+    for param_key in workflow_dict['parameters']:
+        dynamic_parser.add_argument(
+            '--param.{}'.format(param_key),
+            dest='parameters.{}'.format(param_key),
+            required=False,
+            default=workflow_dict['parameters'][param_key]['default']
+        )
+
+    dynamic_args = dynamic_parser.parse_args(other_args)
+
+    return dynamic_args
+
+
 def run(args, other_args, subparser):
     """
     Run GeneFlow workflow engine.
@@ -170,11 +213,6 @@ def run(args, other_args, subparser):
     else:
         Log.an().error('cannot find workflow definition: %s', args.workflow_path)
         return False
-
-    # get absolute path to job file if provided
-    job_path = None
-    if args.job_path:
-        job_path = Path(args.job_path).absolute()
 
     # setup environment
     env = Environment(workflow_path=workflow_path)
@@ -211,6 +249,25 @@ def run(args, other_args, subparser):
             'workflow loaded: %s -> %s', workflow, defs['workflows'][workflow]
         )
 
+    # get workflow definition back from database to ensure
+    # that it's a valid definition
+    workflow_id = next(iter(defs['workflows'].values()))
+    workflow_dict = data_source.get_workflow_def_by_id(workflow_id)
+    if not workflow_dict:
+        Log.an().error(
+            'cannot get workflow definition from data source: workflow_id=%s',
+            workflow_id
+        )
+        return False
+
+    # get dynamic args
+    dynamic_args = parse_dynamic_args(other_args, workflow_dict)
+
+    # get absolute path to job file if provided
+    job_path = None
+    if dynamic_args.job_path:
+        job_path = Path(dynamic_args.job_path).absolute()
+
     # load job definition if provided
     jobs_dict = {}
     gf_def = Definition()
@@ -235,8 +292,8 @@ def run(args, other_args, subparser):
     apply_job_modifiers(
         jobs_dict,
         [
-            'name={}'.format(args.name),
-            'output_uri={}'.format(args.output)
+            'name={}'.format(dynamic_args.name),
+            'output_uri={}'.format(dynamic_args.output)
         ]
     )
 
@@ -246,43 +303,13 @@ def run(args, other_args, subparser):
         if 'workflow_name' not in job:
             job['workflow_name'] = workflow_name
 
-    # get workflow definition back from database to ensure
-    # that it's a valid definition
-    workflow_id = next(iter(defs['workflows'].values()))
-    workflow_dict = data_source.get_workflow_def_by_id(workflow_id)
-    if not workflow_dict:
-        Log.an().error(
-            'cannot get workflow definition from data source: workflow_id=%s',
-            workflow_id
-        )
-        return False
-
-    # parse dynamic args. these are determined from workflow definition
-    dynamic_parser = argparse.ArgumentParser()
-
-    for input_key in workflow_dict['inputs']:
-        dynamic_parser.add_argument(
-            '--in.{}'.format(input_key),
-            dest='inputs.{}'.format(input_key),
-            required=False,
-            default=workflow_dict['inputs'][input_key]['default']
-        )
-    for param_key in workflow_dict['parameters']:
-        dynamic_parser.add_argument(
-            '--param.{}'.format(param_key),
-            dest='parameters.{}'.format(param_key),
-            required=False,
-            default=workflow_dict['parameters'][param_key]['default']
-        )
-
-    dynamic_args = dynamic_parser.parse_args(other_args)
-
     # add inputs and parameters to job definition
     apply_job_modifiers(
         jobs_dict,
         [
             '{}={}'.format(dynamic_arg, getattr(dynamic_args, dynamic_arg))
-            for dynamic_arg in vars(dynamic_args)
+            for dynamic_arg in vars(dynamic_args) \
+                if dynamic_arg.startswith('inputs.') or dynamic_arg.startswith('parameters.')
         ]
     )
 
@@ -291,13 +318,13 @@ def run(args, other_args, subparser):
         jobs_dict,
         [
             'execution.context.{}={}'.format(*exec_arg.split(':', 1)[0:2])
-            for exec_arg in args.exec_context
+            for exec_arg in dynamic_args.exec_context
         ]+[
             'execution.method.{}={}'.format(*exec_arg.split(':', 1)[0:2])
-            for exec_arg in args.exec_method
+            for exec_arg in dynamic_args.exec_method
         ]+[
             'execution.parameters.{}={}'.format(*exec_arg.split(':', 1)[0:2])
-            for exec_arg in args.exec_param
+            for exec_arg in dynamic_args.exec_param
         ]
     )
 
