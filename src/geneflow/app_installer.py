@@ -11,6 +11,7 @@ import os
 from slugify import slugify
 import stat
 import yaml
+from slugify import slugify
 
 from geneflow.data_manager import DataManager
 from geneflow.log import Log
@@ -220,6 +221,15 @@ class AppInstaller:
             self._config,
             CONFIG_SCHEMA[GF_VERSION]
         )
+
+        # check formatting of version
+        self._config['agave_version'] = slugify(self._config['version'].lower()).replace('-','.')
+        if self._config['agave_version'].islower():
+            # contains letters, invalid version
+            Log.an().error(
+                'app config validation error: app version cannot contain letters'
+            )
+            return False
 
         if not valid_def:
             Log.an().error(
