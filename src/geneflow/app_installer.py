@@ -86,9 +86,7 @@ CONFIG_SCHEMA = {
         'default_exec_method': {'type': 'string', 'default': 'auto'},
         'pre_exec': {'type': 'list', 'default': []},
         'exec_methods': {'type': 'list', 'default': []},
-        'post_exec': {'type': 'list', 'default': []},
-        'default_asset': {'type': 'string', 'default': 'singularity'},
-        'assets': {'type': 'dict', 'default': {}}
+        'post_exec': {'type': 'list', 'default': []}
     }
 }
 
@@ -104,9 +102,7 @@ class AppInstaller:
     def __init__(
             self,
             path,
-            app,
-            app_asset=None,
-            copy_prefix='/apps/standalone'
+            app
     ):
         """
         Initialize the GeneFlow AppInstaller class.
@@ -122,8 +118,6 @@ class AppInstaller:
         """
         self._path = Path(path)
         self._app = app
-        self._app_asset = app_asset
-        self._copy_prefix = copy_prefix
 
         # config file, which should be in the root of the app package
         self._config = None
@@ -375,244 +369,6 @@ class AppInstaller:
 
         # make script executable by owner
         os.chmod(script_path, stat.S_IRWXU)
-
-        return True
-
-
-    def _copy_asset(self, asset):
-        """
-        Copy app assets.
-
-        Args:
-            self: class instance
-            asset: what to copy
-
-        Returns:
-            On success: True.
-            On failure: False.
-
-        """
-        if not self._copy_prefix:
-            Log.a().warning(
-                'copy prefix must be specified when copying app assets'
-            )
-            return False
-
-        if not asset.get('dst'):
-            Log.a().warning('asset dst required for app %s', self._app['name'])
-            return False
-
-        if not asset.get('src'):
-            Log.a().warning('asset src required for app %s', self._app['name'])
-            return False
-
-        # create asset destination
-        asset_path = Path(self._path / asset['dst'])
-        asset_path.mkdir(exist_ok=True)
-
-        if 'zip' in asset:
-            # create a tar.gz of src
-            cmd = 'tar -czf "{}" --directory="{}" .'.format(
-                str(Path(asset_path / '{}.tar.gz'.format(asset['zip']))),
-                str(Path(self._copy_prefix) / asset['src'])
-            )
-            Log.some().info('zipping: %s', cmd)
-            cmd_result = ShellWrapper.invoke(cmd)
-            if cmd_result is False:
-                Log.a().warning('cannot zip asset src: %s', cmd)
-                return False
-
-            Log.some().info('tar stdout: %s', cmd_result)
-
-        else:
-            # move without creating tar.gz
-            cmd = 'cp -R "{}" "{}"'.format(
-                str(Path(self._copy_prefix) / asset['src']),
-                str(asset_path)
-            )
-            Log.some().info('copying: %s', cmd)
-            cmd_result = ShellWrapper.invoke(cmd)
-            if cmd_result is False:
-                Log.a().warning('cannot copy asset src: %s', cmd)
-                return False
-
-            Log.some().info('copy stdout: %s', cmd_result)
-
-        return True
-
-
-    def _build_asset(self, asset):
-        """
-        Build app assets.
-
-        Args:
-            self: class instance
-            asset: what to build
-
-        Returns:
-            On success: True.
-            On failure: False.
-
-        """
-        # make sure the build path exists
-        build_path = self._path / 'build'
-        build_path.mkdir(exist_ok=True)
-
-        build_repo_path = None
-        if not asset.get('folder'):
-            Log.a().warning(
-                'repo folder must be set when specifying a build asset'
-            )
-            return False
-
-        # clone build repo
-        build_repo_path = build_path / asset['folder']
-
-        if asset.get('repo'):
-            # if repo is set, clone and build it
-            try:
-                if asset.get('tag'):
-                    Repo.clone_from(
-                        asset['repo'], str(build_repo_path),
-                        branch=asset['tag'], config='http.sslVerify=false'
-                    )
-                else:
-                    Repo.clone_from(
-                        asset['repo'], str(build_repo_path),
-                        config='http.sslVerify=false'
-                    )
-            except GitError as err:
-                Log.an().error(
-                    'cannot clone git repo for build: %s [%s]',
-                    asset['repo'], str(err)
-                )
-                return False
-
-        # if repo is not set, packaged build scripts are included with the
-        # workflow in the build_repo_path
-
-        # build
-        cmd = 'make -C "{}"'.format(str(build_repo_path))
-        Log.some().info('build command: %s', cmd)
-        cmd_result = ShellWrapper.invoke(cmd)
-        if cmd_result is False:
-            Log.a().warning('cannot build app: %s', cmd)
-            return False
-
-        Log.some().info('make stdout: %s', cmd_result)
-
-        # move built assets
-        # make sure asset folder exists
-        if not asset.get('dst'):
-            Log.a().warning('asset dst required for app %s', self._app['name'])
-            return False
-
-        if not asset.get('src'):
-            Log.a().warning('asset src required for app %s', self._app['name'])
-            return False
-
-        # create asset destination
-        asset_path = self._path / asset['dst']
-        asset_path.mkdir(exist_ok=True)
-
-        # set src path
-        src_path = self._path / asset['src']
-
-        if 'zip' in asset:
-            # create a tar.gz of src
-            cmd = 'tar -czf "{}" --directory="{}" .'.format(
-                str(asset_path / '{}.tar.gz'.format(asset['zip'])),
-                str(src_path)
-            )
-            Log.some().info('zipping: %s', cmd)
-            cmd_result = ShellWrapper.invoke(cmd)
-            if cmd_result is False:
-                Log.a().warning('cannot zip asset src: %s', cmd)
-                return False
-
-            Log.some().info('tar stdout: %s', cmd_result)
-
-        else:
-            # move without creating tar.gz
-            cmd = 'mv "{}" "{}"'.format(str(src_path), str(asset_path))
-            Log.some().info('moving: %s', cmd)
-            cmd_result = ShellWrapper.invoke(cmd)
-            if cmd_result is False:
-                Log.a().warning('cannot move asset src: %s', cmd)
-                return False
-
-            Log.some().info('mv stdout: %s', cmd_result)
-
-        return True
-
-
-    def install_assets(self):
-        """
-        Install app assets.
-
-        Args:
-            self: class instance
-
-        Returns:
-            On success: True.
-            On failure: False.
-
-        """
-        # set asset type
-        default_asset = self._app_asset
-        # if not set on CLI, use asset type specified in workflow apps-repo
-        if not default_asset:
-            default_asset = self._app.get('asset')
-        # if not set in workflow apps-repo, use app default
-        if not default_asset:
-            default_asset = self._config.get('default_asset')
-
-        Log.some().info('installing app asset type: %s', str(default_asset))
-        if not default_asset:
-            # no asset type specified, nothing left to do
-            return True
-
-        if 'assets' not in self._config:
-            # app is not configured with any assets
-            return True
-
-        if default_asset not in self._config['assets']:
-            # if asset type is not listed in config, display warning and
-            # continue
-            Log.a().warning(
-                'unconfigured asset type specified: %s', str(default_asset)
-            )
-            return True
-
-        assets = self._config['assets'][default_asset]
-
-        # install all components for asset
-        for asset in assets:
-            Log.some().info('app asset:\n%s', pprint.pformat(asset))
-
-            if 'type' not in asset:
-                Log.a().warning('asset type missing for app "%s"', self._app['name'])
-                continue
-
-            if asset['type'] == 'copy':
-                if not self._copy_asset(asset):
-                    Log.a().warning(
-                        'cannot copy assets for app "%s"', self._app['name']
-                    )
-                    continue
-
-            elif asset['type'] == 'build':
-                if not self._build_asset(asset):
-                    Log.a().warning(
-                        'cannot build assets for app "%s"', self._app['name']
-                    )
-                    continue
-
-            else:
-                Log.a().warning(
-                    'invalid asset type "%s" for app "%s"',
-                    asset['type'], self._app['name']
-                )
 
         return True
 
