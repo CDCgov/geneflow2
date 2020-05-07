@@ -249,4 +249,14 @@ def install_workflow(args, other_args, subparser=None):
     if not wf_installer.initialize():
         Log.an().error('cannot initialize workflow installer')
         return False
-Re
+
+    if not wf_installer.install_apps():
+        Log.an().error('cannot install workflow apps')
+        return False
+
+    if args.agave_test_data:
+        if not wf_installer.upload_agave_test_data():
+            Log.an().error('cannot upload agave test data')
+            return False
+        
+    return True
