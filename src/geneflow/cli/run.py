@@ -47,7 +47,7 @@ def resolve_workflow_path(workflow_identifier):
         return str(abs_path)
 
     if abs_path.is_dir(): # assume this is the name of workflow package dir
-        yaml_path = Path(abs_path / 'workflow' / 'workflow.yaml')
+        yaml_path = Path(abs_path / 'workflow.yaml')
         if yaml_path.is_file():
             return str(yaml_path)
 
@@ -59,7 +59,7 @@ def resolve_workflow_path(workflow_identifier):
             if path:
                 wf_path = Path(path) / workflow_identifier
                 if wf_path.is_dir():
-                    yaml_path = Path(wf_path / 'workflow' / 'workflow.yaml')
+                    yaml_path = Path(wf_path / 'workflow.yaml')
                     if yaml_path.is_file():
                         return str(yaml_path)
 
