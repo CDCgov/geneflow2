@@ -44,8 +44,6 @@ class WorkflowInstaller:
             git_branch=None,
             force=False,
             app_name=None,
-            app_asset=None,
-            copy_prefix='/apps/standalone',
             clean=False,
             config=None,
             agave_params=None,
@@ -63,8 +61,6 @@ class WorkflowInstaller:
             git_branch: branch or tag of git repo
             force: delete existing folder before install?
             app_name: name of app to install
-            app_asset: type of app assets to install
-            copy_prefix: prefix for copy installs
             clean: delete apps folder before install?
             config: GeneFlow config dict that contains Agave client if needed
             agave_params: dict that contains agave parameters for
@@ -82,8 +78,6 @@ class WorkflowInstaller:
         self._git_branch = git_branch
         self._force = force
         self._app_name = app_name
-        self._app_asset = app_asset
-        self._copy_prefix = copy_prefix
         self._clean = clean
         self._make_apps = make_apps
 
@@ -143,11 +137,11 @@ class WorkflowInstaller:
     def _validate_workflow_package(self):
 
         package_path = Path(self._path)
-        if not Path(package_path / 'workflow').is_dir():
-            Log.an().error('missing "workflow" directory in workflow package')
+        if not Path(package_path).is_dir():
+            Log.an().error('workflow package path is not a directory')
             return False
 
-        self._workflow_yaml = Path(package_path / 'workflow' / 'workflow.yaml')
+        self._workflow_yaml = Path(package_path / 'workflow.yaml')
 
         if not self._workflow_yaml.is_file():
             Log.an().error('missing workflow.yaml file in workflow package')
@@ -196,28 +190,6 @@ class WorkflowInstaller:
         return yaml_dict
 
 
-    def _load_apps_repo(self):
-
-        # read yaml file
-        self._apps_repo = self._yaml_to_dict(self._apps_repo_path)
-
-        # empty dict?
-        if not self._apps_repo:
-            Log.an().error(
-                'cannot load/parse apps repo file: %s', self._apps_repo_path
-            )
-            return False
-
-        # make sure it's a list with at least 1 app
-        if not self._apps_repo.get('apps'):
-            Log.an().error(
-                'apps repo must have an "apps" section with at least one app'
-            )
-            return False
-
-        return True
-
-
     def _clone_workflow(self):
 
         if not self._git:
@@ -261,7 +233,7 @@ class WorkflowInstaller:
             None
 
         """
-        apps_path = Path(self._path) / 'workflow' / 'apps'
+        apps_path = Path(self._path) / 'apps'
         if self._clean:
             # remove apps folder
             if apps_path.is_dir():
@@ -288,9 +260,7 @@ class WorkflowInstaller:
                     {
                         'name': app,
                         **self._workflow['apps'][app]
-                    },
-                    self._app_asset,
-                    self._copy_prefix
+                    }
                 )
 
                 # clone app into install location
@@ -307,9 +277,6 @@ class WorkflowInstaller:
                         Log.an().error('cannot compile app templates')
                         return False
 
-                if not app_installer.install_assets():
-                    Log.an().error('cannot install app assets')
-                    return False
 
                 # register in Agave
                 if (
