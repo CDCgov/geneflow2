@@ -138,7 +138,7 @@ class WorkflowInstaller:
 
         package_path = Path(self._path)
         if not Path(package_path).is_dir():
-            Log.an().error('workflow package path is not a directory')
+            Log.an().error('workflow package path is not a directory: %s', package_path)
             return False
 
         self._workflow_yaml = Path(package_path / 'workflow.yaml')
