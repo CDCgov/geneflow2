@@ -187,7 +187,7 @@ class AppInstaller:
 
     def load_config(self):
         """
-        Load app config.yaml file.
+        Load app config file.
 
         Args:
             self: class instance
@@ -199,13 +199,13 @@ class AppInstaller:
         """
         # read yaml file
         self._config = self._yaml_to_dict(
-            str(Path(self._path / 'config.yaml'))
+            str(Path(self._path / 'app.yaml'))
         )
 
         # empty dict?
         if not self._config:
             Log.an().error(
-                'cannot load/parse config.yaml file in app: %s', self._path
+                'cannot load/parse app.yaml file in app: %s', self._path
             )
             return False
 

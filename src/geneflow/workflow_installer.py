@@ -269,7 +269,7 @@ class WorkflowInstaller:
                     return False
 
                 if not app_installer.load_config():
-                    Log.an().error('cannot load app config.yaml')
+                    Log.an().error('cannot load app config')
                     return False
 
                 if self._make_apps:
