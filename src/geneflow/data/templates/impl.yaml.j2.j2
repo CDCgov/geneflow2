@@ -27,7 +27,7 @@ parameters:
     default: {{ value.default }}
   {% endif %}
   {% endfor %}
-definition:
+implementation:
 {{ '{%' }} if agave {{ '%}' }}
   agave:
     agave_app_id: {{ '{{' }} agave.appsPrefix {{ '}}' }}-{{ slugify_name }}-{{ version }}{{ '{{' }} revision {{ '}}' }}

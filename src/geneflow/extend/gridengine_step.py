@@ -92,12 +92,12 @@ class GridengineStep(WorkflowStep):
             Log.an().error(msg)
             return self._fatal(msg)
 
-        # make sure app has a local definition
+        # make sure app has a local implementation
         #   local def can be used by gridengine because it just needs a shell script
-        if 'local' not in self._app['definition']:
+        if 'local' not in self._app['implementation']:
             msg = (
                 '"gridengine" step class can only be instantiated with an app that'
-                ' has a "local" definition'
+                ' has a "local" implementation'
             )
             Log.an().error(msg)
             return self._fatal(msg)
@@ -234,10 +234,10 @@ class GridengineStep(WorkflowStep):
                     = self._app['parameters'][param_key]['default']
 
         # get full path of wrapper script
-        path = shutil.which(self._app['definition']['local']['script'])
+        path = shutil.which(self._app['implementation']['local']['script'])
         if not path:
             msg = 'wrapper script not found in path: %s'.format(
-                self._app['definition']['local']['script']
+                self._app['implementation']['local']['script']
             )
             Log.an().error(msg)
             return self._fatal(msg)

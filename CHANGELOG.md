@@ -1,15 +1,17 @@
 # Changelog
 
 
-## 2020/04/23 - v2.0.0-alpha.3: bug fix release
+## 2020/05/12 - v2.0.0-alpha.3: enhancement and bug fix release
 
-1. Fix bug: Run pending jobs CLI does not change status of pending jobs fast enough.
+1. Simplify workflow and app structure.
 
-2. Fix bug: App version numbers with invalid characters cause Agave registration to fail.
+2. Fix bug: Run pending jobs CLI does not change status of pending jobs fast enough.
 
-3. Fix bug: Empty --ec, --ep, or --em parameters causes error.
+3. Fix bug: App version numbers with invalid characters cause Agave registration to fail.
 
-4. Fix bug: Re-organize run.py dynamic arg parsing.
+4. Fix bug: Empty --ec, --ep, or --em parameters causes error.
+
+5. Fix bug: Re-organize run.py dynamic arg parsing.
 
 
 ## 2020/04/08 - v2.0.0-alpha.2: simplify CLI arguments

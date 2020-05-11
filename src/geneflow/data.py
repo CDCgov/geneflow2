@@ -60,7 +60,7 @@ class AppEntity(Base):
     git = Column(String, default='')
     version = Column(String, default='')
     username = Column(String, default='')
-    definition = Column(Text, default='')
+    implementation = Column(Text, default='')
     inputs = Column(Text, default='')
     parameters = Column(Text, default='')
     public = Column(Boolean, default=False)
@@ -507,7 +507,7 @@ class DataSource:
                 AppEntity.username,
                 AppEntity.inputs,
                 AppEntity.parameters,
-                AppEntity.definition
+                AppEntity.implementation
             ).\
                 filter(StepEntity.workflow_id == workflow_id).\
                 filter(StepEntity.app_id == AppEntity.id).\
@@ -524,7 +524,7 @@ class DataSource:
                     'username': row[6],
                     'inputs': json.loads(row[7]),
                     'parameters': json.loads(row[8]),
-                    'definition': json.loads(row[9])
+                    'implementation': json.loads(row[9])
                 } for row in result
             }
 
@@ -830,7 +830,7 @@ class DataSource:
                 version=data['version'],
                 username=data['username'],
                 public=data['public'],
-                definition=data['definition'],
+                implementation=data['implementation'],
                 inputs=data['inputs'],
                 parameters=data['parameters']
             ))
@@ -1667,7 +1667,7 @@ class DataSource:
                 'version': valid_def['version'],
                 'username': valid_def['username'],
                 'public': valid_def['public'],
-                'definition': json.dumps(valid_def['definition']),
+                'implementation': json.dumps(valid_def['implementation']),
                 'inputs': json.dumps(valid_def['inputs']),
                 'parameters': json.dumps(valid_def['parameters'])
             })
@@ -1781,7 +1781,7 @@ class DataSource:
                     'version': valid_def['version'],
                     'username': valid_def['username'],
                     'public': valid_def['public'],
-                    'definition': json.dumps(valid_def['definition']),
+                    'implementation': json.dumps(valid_def['implementation']),
                     'inputs': json.dumps(valid_def['inputs']),
                     'parameters': json.dumps(valid_def['parameters'])
                 }
@@ -1854,11 +1854,7 @@ class DataSource:
                     # app not yet loaded
 
                     # import app definition
-                    #if not os.path.isabs(step['app']):
-                    #    app_path = os.path.join(base_path, step['app'])
-                    #else:
-                    #    app_path = step['app']
-                    app_path = os.path.join(base_path, 'apps', step['app'], 'app.yaml')
+                    app_path = os.path.join(base_path, 'apps', step['app'], 'impl.yaml')
 
                     apps = self.import_apps_from_def(app_path)
                     if not apps:

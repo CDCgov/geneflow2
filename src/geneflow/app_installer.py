@@ -261,12 +261,12 @@ class AppInstaller:
             On failure: False.
 
         """
-        Log.some().info('compiling %s', str(self._path / 'app.yaml.j2'))
+        Log.some().info('compiling %s', str(self._path / 'impl.yaml.j2'))
 
         if not TemplateCompiler.compile_template(
                 None,
-                'app.yaml.j2.j2',
-                str(self._path / 'app.yaml.j2'),
+                'impl.yaml.j2.j2',
+                str(self._path / 'impl.yaml.j2'),
                 slugify_name=slugify(self._config['name']),
                 **self._config
         ):

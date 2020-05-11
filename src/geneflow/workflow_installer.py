@@ -303,8 +303,8 @@ class WorkflowInstaller:
                     # compile jinja template for published app definition
                     if not TemplateCompiler.compile_template(
                             repo_path,
-                            'app.yaml.j2',
-                            repo_path / 'app.yaml',
+                            'impl.yaml.j2',
+                            repo_path / 'impl.yaml',
                             agave=self._agave_params['agave'],
                             version=register_result['version'],
                             revision=register_result['revision']
@@ -319,7 +319,7 @@ class WorkflowInstaller:
 
                     # compile jinja template for app definition
                     if not TemplateCompiler.compile_template(
-                            repo_path, 'app.yaml.j2', repo_path / 'app.yaml'
+                            repo_path, 'impl.yaml.j2', repo_path / 'impl.yaml'
                     ):
                         Log.an().error(
                             'cannot compile app "%s" definition from template',

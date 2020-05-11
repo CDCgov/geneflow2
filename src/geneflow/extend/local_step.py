@@ -75,7 +75,7 @@ class LocalStep(WorkflowStep):
             return self._fatal(msg)
 
         # make sure app has a local definition
-        if 'local' not in self._app['definition']:
+        if 'local' not in self._app['implementation']:
             msg = (
                 '"local" step class can only be instantiated with an app that'
                 ' has a "local" definition'
@@ -215,7 +215,7 @@ class LocalStep(WorkflowStep):
                     = self._app['parameters'][param_key]['default']
 
         # construct shell command
-        cmd = self._app['definition']['local']['script']
+        cmd = self._app['implementation']['local']['script']
         for input_key in inputs:
             if inputs[input_key]:
                 cmd += ' --{}="{}"'.format(

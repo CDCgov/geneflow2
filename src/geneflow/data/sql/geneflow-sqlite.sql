@@ -41,7 +41,7 @@ CREATE TABLE app (
     git TEXT NOT NULL DEFAULT '',
     version VARCHAR(32) NOT NULL DEFAULT '',
     username VARCHAR(32) NOT NULL DEFAULT '',
-    definition TEXT NOT NULL DEFAULT '',
+    implementation TEXT NOT NULL DEFAULT '',
     inputs TEXT NOT NULL DEFAULT '',
     parameters TEXT NOT NULL DEFAULT '',
     public TINYINT NOT NULL DEFAULT 0,

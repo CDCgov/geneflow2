@@ -33,7 +33,7 @@ create table app (
     git text not null default '',
     version varchar(32) not null default '',
     username varchar(32) not null default '',
-    definition text not null default '',
+    implementation text not null default '',
     inputs text not null default '',
     parameters text not null default '',
     public tinyint not null default 0,

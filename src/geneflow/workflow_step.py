@@ -56,7 +56,7 @@ class WorkflowStep(StageableData):
                     description:
                     username:
                     type:
-                    definition:
+                    implementation:
                     inputs: (dict from json)
                     parameters: (dict from json)
                     public:

@@ -214,7 +214,7 @@ APP_SCHEMA = {
                 }
             }
         },
-        'definition': {
+        'implementation': {
             'type': 'dict',
             'required': True,
             'valueschema': {'type': 'dict'}

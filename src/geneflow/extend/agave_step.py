@@ -102,7 +102,7 @@ class AgaveStep(WorkflowStep):
             return self._fatal(msg)
 
         # make sure app has an agave definition
-        if 'agave' not in self._app['definition']:
+        if 'agave' not in self._app['implementation']:
             msg = (
                 '"agave" step class can only be instantiated with an app that'
                 ' has an "agave" definition'
@@ -274,7 +274,7 @@ class AgaveStep(WorkflowStep):
         )
         app_template = {
             'name': name,
-            'appId': self._app['definition']['agave']['agave_app_id'],
+            'appId': self._app['implementation']['agave']['agave_app_id'],
             'archive': True,
             'inputs': inputs,
             'parameters': parameters,
