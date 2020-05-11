@@ -248,7 +248,7 @@ class WorkflowInstaller:
                 Log.some().info(
                     'app: %s:%s [%s]',
                     app,
-                    self._workflow['apps'][app]['repo'],
+                    self._workflow['apps'][app]['git'],
                     self._workflow['apps'][app]['version']
                 )
 

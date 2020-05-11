@@ -154,14 +154,14 @@ class Workflow:
             '\n    Workflow: {}'
             '\n        Version: {}'
             '\n        Description: {}'
-            '\n        Repo: {}'
+            '\n        Git: {}'
         ).format(
             self._job['name'],
             self._job_id,
             self._workflow['name'],
             self._workflow['version'],
             self._workflow['description'],
-            self._workflow['repo_uri']
+            self._workflow['git']
         )
 
         str_rep += '\n    Inputs: '
@@ -751,7 +751,7 @@ class Workflow:
                     node_name,
                     node['node']._app['name'],
                     node['node']._app['version'],
-                    node['node']._app['repo_uri']
+                    node['node']._app['git']
                 )
 
                 Log.some().debug('[%s]: iterating map uri', node_name)

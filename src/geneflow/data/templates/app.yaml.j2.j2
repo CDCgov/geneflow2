@@ -1,11 +1,11 @@
 %YAML 1.1
 ---
-gfVersion: v1.0
+gfVersion: v2.0
 class: app
 
 name: {{ name }}
 description: {{ description }}
-repo_uri: {{ repo_uri }}
+git: {{ git }}
 version: '{{ version }}'
 inputs:
   {% for key, value in inputs.items() %}

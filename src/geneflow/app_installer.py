@@ -19,13 +19,13 @@ from geneflow.template_compiler import TemplateCompiler
 from geneflow.uri_parser import URIParser
 from geneflow.extend.agave_wrapper import AgaveWrapper
 
-GF_VERSION = 'v1.0'
+GF_VERSION = 'v2.0'
 
 CONFIG_SCHEMA = {
-    'v1.0': {
+    'v2.0': {
         'name': {'type': 'string', 'required': True},
         'description': {'type': 'string', 'maxlength': 64, 'required': True},
-        'repo_uri': {'type': 'string', 'default': ''},
+        'git': {'type': 'string', 'default': ''},
         'version': {'type': 'string', 'required': True},
         'inputs': {
             'type': 'dict',
@@ -167,18 +167,18 @@ class AppInstaller:
         try:
             if self._app['version']:
                 Repo.clone_from(
-                    self._app['repo'], str(self._path), branch=self._app['version'],
+                    self._app['git'], str(self._path), branch=self._app['version'],
                     config='http.sslVerify=false'
                 )
             else:
                 Repo.clone_from(
-                    self._app['repo'], str(self._path),
+                    self._app['git'], str(self._path),
                     config='http.sslVerify=false'
                 )
         except GitError as err:
             Log.an().error(
                 'cannot clone app git repo: %s [%s]',
-                self._app['repo'], str(err)
+                self._app['git'], str(err)
             )
             return False
 

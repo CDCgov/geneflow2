@@ -8,10 +8,10 @@ import yaml
 
 from geneflow.log import Log
 
-GF_VERSION = 'v1.0'
+GF_VERSION = 'v2.0'
 
 WORKFLOW_SCHEMA = {
-    'v1.0': {
+    'v2.0': {
         'gfVersion': {
             'type': 'string', 'default': GF_VERSION, 'allowed': [GF_VERSION]
         },
@@ -21,8 +21,7 @@ WORKFLOW_SCHEMA = {
         'workflow_id': {'type': 'string', 'default': ''},
         'name': {'type': 'string', 'required': True},
         'description': {'type': 'string', 'required': True},
-        'repo_uri': {'type': 'string', 'default': ''},
-        'documentation_uri': {'type': 'string', 'default': ''},
+        'git': {'type': 'string', 'default': ''},
         'version': {'type': 'string', 'required': True},
         'public': {'type': 'boolean', 'default': False},
         'enable': {'type': 'boolean', 'default': True},
@@ -84,9 +83,8 @@ WORKFLOW_SCHEMA = {
                 'type': 'dict',
                 'required': True,
                 'schema': {
-                    'repo': {'type': 'string', 'required': True},
+                    'git': {'type': 'string', 'required': True},
                     'version': {'type': 'string', 'nullable': True, 'default': None},
-                    'asset': {'type': 'string', 'nullable': True, 'default': None}
                 }
             }
         },
@@ -155,7 +153,7 @@ WORKFLOW_SCHEMA = {
 }
 
 APP_SCHEMA = {
-    'v1.0': {
+    'v2.0': {
         'gfVersion': {
             'type': 'string',
             'default': GF_VERSION,
@@ -169,7 +167,7 @@ APP_SCHEMA = {
         'app_id': {'type': 'string', 'default': ''},
         'name': {'type': 'string', 'required': True},
         'description': {'type': 'string', 'maxlength': 64, 'required': True},
-        'repo_uri': {'type': 'string', 'default': ''},
+        'git': {'type': 'string', 'default': ''},
         'version': {'type': 'string', 'default': ''},
         'public': {'type': 'boolean', 'default': True},
         'username': {'type': 'string', 'default': 'user'},
@@ -225,7 +223,7 @@ APP_SCHEMA = {
 }
 
 JOB_SCHEMA = {
-    'v1.0': {
+    'v2.0': {
         'gfVersion': {
             'type': 'string',
             'default': GF_VERSION,
