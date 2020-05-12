@@ -717,7 +717,7 @@ class Workflow:
 
     def _re_init(self):
         """Reinitialize connection object."""
-        raise NotImplementedError
+        return True
 
 
     def run(self):
