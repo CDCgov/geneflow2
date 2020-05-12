@@ -715,6 +715,11 @@ class Workflow:
         return True
 
 
+    def _re_init(self):
+        """Reinitialize connection object."""
+        raise NotImplementedError
+
+
     def run(self):
         """
         Run Workflow.
@@ -745,6 +750,12 @@ class Workflow:
                     return self._fatal(msg)
 
             else: # step node
+
+                # Reinit connection to exec context
+                if not self._re_init():
+                    msg = 'cannot reinit exec context'
+                    Log.an().error(msg)
+                    return self._fatal(msg)
 
                 Log.some().info(
                     '[%s]: app: %s:%s [%s]',
