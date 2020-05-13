@@ -45,6 +45,9 @@ CREATE TABLE app (
     inputs TEXT NOT NULL DEFAULT '',
     parameters TEXT NOT NULL DEFAULT '',
     public TINYINT NOT NULL DEFAULT 0,
+    pre_exec TEXT NOT NULL DEFAULT '',
+    exec_methods TEXT NOT NULL DEFAULT '',
+    post_exec TEXT NOT NULL DEFAULT '',
     PRIMARY KEY (id)
 );
 

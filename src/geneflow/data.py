@@ -1873,7 +1873,7 @@ class DataSource:
                     # app not yet loaded
 
                     # import app definition
-                    app_path = os.path.join(base_path, 'apps', step['app'], 'impl.yaml')
+                    app_path = os.path.join(base_path, 'apps', step['app'], 'app.yaml')
 
                     apps = self.import_apps_from_def(app_path)
                     if not apps:

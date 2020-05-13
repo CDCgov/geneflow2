@@ -149,6 +149,13 @@ def parse_dynamic_args(other_args, workflow_dict):
         help='name of job'
     )
     dynamic_parser.add_argument(
+        '-w', '--work',
+        type=str,
+        action='append',
+        default=[],
+        help='work directory'
+    )
+    dynamic_parser.add_argument(
         '--exec-context', '--ec',
         type=str,
         dest='exec_context',
@@ -310,6 +317,15 @@ def run(args, other_args, subparser):
             '{}={}'.format(dynamic_arg, getattr(dynamic_args, dynamic_arg))
             for dynamic_arg in vars(dynamic_args) \
                 if dynamic_arg.startswith('inputs.') or dynamic_arg.startswith('parameters.')
+        ]
+    )
+
+    # add work URIs to job definition
+    apply_job_modifiers(
+        jobs_dict,
+        [
+            'work_uri.{}={}'.format(*work_arg.split(':', 1)[0:2])
+            for work_arg in dynamic_args.work
         ]
     )
 

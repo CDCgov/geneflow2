@@ -37,6 +37,9 @@ create table app (
     inputs text not null default '',
     parameters text not null default '',
     public tinyint not null default 0,
+    pre_exec text not null default '',
+    exec_methods text not null default '',
+    post_exec text not null default '',
     primary key (id)
 );
 
