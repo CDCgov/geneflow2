@@ -309,7 +309,7 @@ eval set -- "$PARSED"
 {% endif %}
 {% endif %}
 {% endfor %}
-EXEC_METHOD="{{ default_exec_method }}"
+EXEC_METHOD="auto"
 ## ***************************************************************** <<< MODIFY
 
 ## MODIFY >>> *****************************************************************
@@ -536,20 +536,6 @@ AUTO_EXEC=${EXEC_METHOD}
 ## MODIFY >>> *****************************************************************
 ## Add app-specific paths to detect the execution method.
 if [ "${EXEC_METHOD}" = "auto" ]; then
-    # detect if singularity available
-    if command -v singularity >/dev/null 2>&1; then
-        SINGULARITY=yes
-    else
-        SINGULARITY=no
-    fi
-
-    # detect if docker available
-    if command -v docker >/dev/null 2>&1; then
-        DOCKER=yes
-    else
-        DOCKER=no
-    fi
-
     # detect execution method
     {% for exec_method in exec_methods %}
     {% if loop.first %}
