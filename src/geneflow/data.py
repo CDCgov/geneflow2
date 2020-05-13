@@ -63,6 +63,9 @@ class AppEntity(Base):
     implementation = Column(Text, default='')
     inputs = Column(Text, default='')
     parameters = Column(Text, default='')
+    pre_exec = Column(Text, default='')
+    exec_methods = Column(Text, default='')
+    post_exec = Column(Text, default='')
     public = Column(Boolean, default=False)
 
 
@@ -507,7 +510,10 @@ class DataSource:
                 AppEntity.username,
                 AppEntity.inputs,
                 AppEntity.parameters,
-                AppEntity.implementation
+                AppEntity.implementation,
+                AppEntity.pre_exec,
+                AppEntity.exec_methods,
+                AppEntity.post_exec
             ).\
                 filter(StepEntity.workflow_id == workflow_id).\
                 filter(StepEntity.app_id == AppEntity.id).\
@@ -524,7 +530,10 @@ class DataSource:
                     'username': row[6],
                     'inputs': json.loads(row[7]),
                     'parameters': json.loads(row[8]),
-                    'implementation': json.loads(row[9])
+                    'implementation': json.loads(row[9]),
+                    'pre_exec': json.loads(row[10]),
+                    'exec_methods': json.loads(row[11]),
+                    'post_exec': json.loads(row[12])
                 } for row in result
             }
 
@@ -832,7 +841,11 @@ class DataSource:
                 public=data['public'],
                 implementation=data['implementation'],
                 inputs=data['inputs'],
-                parameters=data['parameters']
+                parameters=data['parameters'],
+                pre_exec=data['pre_exec'],
+                exec_methods=data['exec_methods'],
+                post_exec=data['post_exec']
+
             ))
         except SQLAlchemyError as err:
             Log.an().error('sql exception [%s]', str(err))
@@ -1669,7 +1682,10 @@ class DataSource:
                 'public': valid_def['public'],
                 'implementation': json.dumps(valid_def['implementation']),
                 'inputs': json.dumps(valid_def['inputs']),
-                'parameters': json.dumps(valid_def['parameters'])
+                'parameters': json.dumps(valid_def['parameters']),
+                'pre_exec': json.dumps(valid_def['pre_exec']),
+                'exec_methods': json.dumps(valid_def['exec_methods']),
+                'post_exec': json.dumps(valid_def['post_exec'])
             })
             if not app_id:
                 Log.an().error(
@@ -1783,7 +1799,10 @@ class DataSource:
                     'public': valid_def['public'],
                     'implementation': json.dumps(valid_def['implementation']),
                     'inputs': json.dumps(valid_def['inputs']),
-                    'parameters': json.dumps(valid_def['parameters'])
+                    'parameters': json.dumps(valid_def['parameters']),
+                    'pre_exec': json.dumps(valid_def['pre_exec']),
+                    'exec_methods': json.dumps(valid_def['exec_methods']),
+                    'post_exec': json.dumps(valid_def['post_exec']),
                 }
         ):
             Log.an().error(

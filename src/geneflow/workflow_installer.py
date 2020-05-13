@@ -268,7 +268,7 @@ class WorkflowInstaller:
                     Log.an().error('cannot clone app to %s', str(repo_path))
                     return False
 
-                if not app_installer.load_config():
+                if not app_installer.load_app():
                     Log.an().error('cannot load app config')
                     return False
 
@@ -300,29 +300,24 @@ class WorkflowInstaller:
                         pprint.pformat(register_result)
                     )
 
-                    # compile jinja template for published app definition
-                    if not TemplateCompiler.compile_template(
-                            repo_path,
-                            'impl.yaml.j2',
-                            repo_path / 'impl.yaml',
-                            agave=self._agave_params['agave'],
-                            version=register_result['version'],
-                            revision=register_result['revision']
+                    # update app definition with implementation section
+                    if not app_installer.update_def(
+                        agave={
+                            'apps_prefix': self._agave_params['agave']['appsPrefix'],
+                            'revision': register_result['revision']
+                        }
                     ):
                         Log.an().error(
-                            'cannot compile app "%s" definition from template',
+                            'cannot update app "%s" definition',
                             app
                         )
                         return False
 
                 else:
-
-                    # compile jinja template for app definition
-                    if not TemplateCompiler.compile_template(
-                            repo_path, 'impl.yaml.j2', repo_path / 'impl.yaml'
-                    ):
+                    # update app definition with implementation section
+                    if not app_installer.update_def(agave=None):
                         Log.an().error(
-                            'cannot compile app "%s" definition from template',
+                            'cannot update app "%s" definition',
                             app
                         )
                         return False

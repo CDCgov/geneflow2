@@ -27,6 +27,7 @@ class GridengineWorkflow:
         # drmaa library for grid engine
         self._drmaa_session = drmaa.Session()
 
+
     def __del__(self):
         """
         Disconnect from drmaa session when workflow class is deleted.

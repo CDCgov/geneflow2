@@ -13,82 +13,12 @@ import stat
 import yaml
 
 from geneflow.data_manager import DataManager
+from geneflow.definition import Definition
 from geneflow.log import Log
 from geneflow.shell_wrapper import ShellWrapper
 from geneflow.template_compiler import TemplateCompiler
 from geneflow.uri_parser import URIParser
 from geneflow.extend.agave_wrapper import AgaveWrapper
-
-GF_VERSION = 'v2.0'
-
-CONFIG_SCHEMA = {
-    'v2.0': {
-        'name': {'type': 'string', 'required': True},
-        'description': {'type': 'string', 'maxlength': 64, 'required': True},
-        'git': {'type': 'string', 'default': ''},
-        'version': {'type': 'string', 'required': True},
-        'inputs': {
-            'type': 'dict',
-            'default': {},
-            'valueschema': {
-                'type': 'dict',
-                'required': True,
-                'schema': {
-                    'label': {'type': 'string', 'required': True},
-                    'description': {'type': 'string', 'default': ''},
-                    'type': {
-                        'type': 'string',
-                        'required': True,
-                        'default': 'Any',
-                        'allowed': ['File', 'Directory', 'Any']
-                    },
-                    'default': {'type': 'string', 'nullable': True},
-                    'script_default': {'type': 'string', 'nullable': True},
-                    'required': {'type': 'boolean', 'required': True},
-                    'test_value': {'type': 'string', 'nullable': True},
-                    'post_exec': {
-                        'type': 'list',
-                        'schema': {'type': 'dict'},
-                        'nullable': True
-                    }
-                }
-            }
-        },
-        'parameters': {
-            'type': 'dict',
-            'default': {},
-            'valueschema': {
-                'type': 'dict',
-                'required': True,
-                'schema': {
-                    'label': {'type': 'string', 'required': True},
-                    'description': {'type': 'string', 'default': ''},
-                    'type': {
-                        'type': 'string',
-                        'required': True,
-                        'default': 'Any',
-                        'allowed': [
-                            'File', 'Directory', 'string', 'int',
-                            'float', 'double', 'long', 'Any'
-                        ]
-                    },
-                    'default': {'nullable': True, 'default': None},
-                    'required': {'type': 'boolean', 'required': True},
-                    'test_value': {'nullable': True},
-                    'post_exec': {
-                        'type': 'list',
-                        'schema': {'type': 'dict'},
-                        'nullable': True
-                    }
-                }
-            }
-        },
-        'default_exec_method': {'type': 'string', 'default': 'auto'},
-        'pre_exec': {'type': 'list', 'default': []},
-        'exec_methods': {'type': 'list', 'default': []},
-        'post_exec': {'type': 'list', 'default': []}
-    }
-}
 
 
 class AppInstaller:
@@ -102,7 +32,7 @@ class AppInstaller:
     def __init__(
             self,
             path,
-            app
+            app_info
     ):
         """
         Initialize the GeneFlow AppInstaller class.
@@ -110,17 +40,17 @@ class AppInstaller:
         Args:
             self: class instance
             path: local path to the app package
-            app: app information (name, git repo, version)
+            app_info: app information from workflow definition (name, git repo, version)
 
         Returns:
             None
 
         """
         self._path = Path(path)
-        self._app = app
+        self._app_info = app_info
 
-        # config file, which should be in the root of the app package
-        self._config = None
+        # app definition, which should be in the root of the app package
+        self._app = None
 
 
     @classmethod
@@ -165,29 +95,29 @@ class AppInstaller:
 
         # clone app's git repo into target location
         try:
-            if self._app['version']:
+            if self._app_info['version']:
                 Repo.clone_from(
-                    self._app['git'], str(self._path), branch=self._app['version'],
+                    self._app_info['git'], str(self._path), branch=self._app_info['version'],
                     config='http.sslVerify=false'
                 )
             else:
                 Repo.clone_from(
-                    self._app['git'], str(self._path),
+                    self._app_info['git'], str(self._path),
                     config='http.sslVerify=false'
                 )
         except GitError as err:
             Log.an().error(
                 'cannot clone app git repo: %s [%s]',
-                self._app['git'], str(err)
+                self._app_info['git'], str(err)
             )
             return False
 
         return True
 
 
-    def load_config(self):
+    def load_app(self):
         """
-        Load app config file.
+        Load app definition.
 
         Args:
             self: class instance
@@ -198,36 +128,28 @@ class AppInstaller:
 
         """
         # read yaml file
-        self._config = self._yaml_to_dict(
+        self._app = self._yaml_to_dict(
             str(Path(self._path / 'app.yaml'))
         )
 
         # empty dict?
-        if not self._config:
+        if not self._app:
             Log.an().error(
                 'cannot load/parse app.yaml file in app: %s', self._path
             )
             return False
 
-        validator = cerberus.Validator(allow_unknown=False)
-        valid_def = validator.validated(
-            self._config,
-            CONFIG_SCHEMA[GF_VERSION]
-        )
+        valid_def = Definition.validate_app(self._app)
+        if not valid_def:
+            Log.an().error('app validation error')
+            return False
 
         # check formatting of version
-        self._config['agave_version'] = slugify(self._config['version'].lower()).replace('-','.')
-        if self._config['agave_version'].islower()
+        self._app['agave_version'] = slugify(self._app['version'].lower()).replace('-','.')
+        if self._app['agave_version'].islower():
             # contains letters, invalid version
             Log.an().error(
                 'app config validation error: app version cannot contain letters'
-            )
-            return False
-
-        if not valid_def:
-            Log.an().error(
-                'app config validation error:\n%s',
-                pprint.pformat(validator.errors)
             )
             return False
 
@@ -246,8 +168,6 @@ class AppInstaller:
             On failure: False
 
         """
-        if not self.make_def():
-            return False
         if not self.make_agave():
             return False
         if not self.make_wrapper():
@@ -258,9 +178,9 @@ class AppInstaller:
         return True
 
 
-    def make_def(self):
+    def update_def(self, agave):
         """
-        Generate the GeneFlow app definition.
+        Update GeneFlow app definition by adding the implementation section.
 
         Args:
             self: class instance
@@ -270,16 +190,27 @@ class AppInstaller:
             On failure: False.
 
         """
-        Log.some().info('compiling %s', str(self._path / 'impl.yaml.j2'))
+        Log.some().info('updating %s', str(self._path / 'app.yaml'))
 
-        if not TemplateCompiler.compile_template(
-                None,
-                'impl.yaml.j2.j2',
-                str(self._path / 'impl.yaml.j2'),
-                slugify_name=slugify(self._config['name']),
-                **self._config
-        ):
-            Log.an().error('cannot compile GeneFlow app definition template')
+        try:
+            with open(str(self._path / 'app.yaml'), 'a') as app_yaml:
+                app_yaml.write('\n\nimplementation:')
+                if agave:
+                    app_yaml.write('\n  agave:')
+                    app_yaml.write(
+                        '\n    agave_app_id: {}-{}-{}{}'.format(
+                            agave['apps_prefix'],
+                            slugify(self._app['name']),
+                            self._app['agave_version'],
+                            agave['revision']
+                        )
+                    )
+                app_yaml.write('\n  local:')
+                app_yaml.write(
+                    '\n    script: {}.sh'.format(slugify(self._app['name']))
+                )
+        except IOError as err:
+            Log.an().error('cannot update GeneFlow app definition: %s', err)
             return False
 
         return True
@@ -303,8 +234,8 @@ class AppInstaller:
                 None,
                 'agave-app-def.json.j2.j2',
                 str(self._path / 'agave-app-def.json.j2'),
-                slugify_name=slugify(self._config['name']),
-                **self._config
+                slugify_name=slugify(self._app['name']),
+                **self._app
         ):
             Log.an().error('cannot compile GeneFlow Agave app definition template')
             return False
@@ -328,7 +259,7 @@ class AppInstaller:
         asset_path = Path(self._path / 'assets')
         asset_path.mkdir(exist_ok=True)
 
-        script_path = str(asset_path / '{}.sh'.format(slugify(self._config['name'])))
+        script_path = str(asset_path / '{}.sh'.format(slugify(self._app['name'])))
         Log.some().info('compiling %s', script_path)
 
         # compile jinja2 template
@@ -336,7 +267,7 @@ class AppInstaller:
                 None,
                 'wrapper-script.sh.j2',
                 script_path,
-                **self._config
+                **self._app
         ):
             Log.an().error('cannot compile GeneFlow app wrapper script')
             return False
@@ -371,7 +302,7 @@ class AppInstaller:
                 None,
                 'test.sh.j2',
                 script_path,
-                **self._config
+                **self._app
         ):
             Log.an().error('cannot compile GeneFlow app test script')
             return False
@@ -395,19 +326,19 @@ class AppInstaller:
 
         """
         Log.some().info('registering agave app %s', str(self._path))
-        Log.some().info('app version: %s', self._config['version'])
+        Log.some().info('app version: %s', self._app['version'])
 
         # compile agave app template
         if not TemplateCompiler.compile_template(
                 self._path,
                 'agave-app-def.json.j2',
                 self._path / 'agave-app-def.json',
-                version=self._config['version'],
+                version=self._app['version'],
                 agave=agave_params['agave']
         ):
             Log.a().warning(
                 'cannot compile agave app "%s" definition from template',
-                self._app['name']
+                self._app_info['name']
             )
             return False
 
@@ -437,8 +368,8 @@ class AppInstaller:
             'agave://{}/{}/{}-{}'.format(
                 agave_params['agave']['deploymentSystem'],
                 agave_params['agave']['appsDir'],
-                slugify(self._config['name']),
-                self._config['version']
+                slugify(self._app['name']),
+                self._app['version']
             )
         )
         Log.some().info(
@@ -563,7 +494,7 @@ class AppInstaller:
             # return published id and revision
             register_result = {
                 'id': app_publish_result['id'],
-                'version': self._config['version'],
+                'version': self._app['version'],
                 'revision': 'u{}'.format(app_publish_result['revision'])
             }
 
@@ -571,7 +502,7 @@ class AppInstaller:
             # return un-published id and blank revision
             register_result = {
                 'id': app_add_result['id'],
-                'version': self._config['version'],
+                'version': self._app['version'],
                 'revision': ''
             }
 

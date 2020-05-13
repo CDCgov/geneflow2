@@ -9,9 +9,13 @@
 
 3. Fix bug: App version numbers with invalid characters cause Agave registration to fail.
 
-4. Fix bug: Empty --ec, --ep, or --em parameters causes error.
+4. Fix bug: Empty --ec, --ep, or --em parameters cause error.
 
 5. Fix bug: Re-organize run.py dynamic arg parsing.
+
+6. Fix bug: Re-initialize drmaa grid engine session before each step.
+
+7. Fix bug: Update dependency versions in requirements files.
 
 
 ## 2020/04/08 - v2.0.0-alpha.2: simplify CLI arguments
