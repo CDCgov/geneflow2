@@ -11,6 +11,7 @@ import os
 from slugify import slugify
 import stat
 import yaml
+from slugify import slugify
 
 from geneflow.data_manager import DataManager
 from geneflow.definition import Definition

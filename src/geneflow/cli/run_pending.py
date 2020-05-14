@@ -90,7 +90,7 @@ def run_pending(args, other_args, subparser=None):
         'pending jobs found:\n%s', pprint.pformat(pending_jobs)
     )
 
-    # set job status to QUEUED to minimize the change that another
+    # set job status to QUEUED to minimize the chance that another
     # process will try to run it
     for job in pending_jobs:
         if not data_source.update_job_status(job['id'], 'QUEUED', ''):
