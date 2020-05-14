@@ -238,9 +238,9 @@ class WorkflowStep(StageableData):
         The map URI can point to the output URIs of previous workflow steps.
 
         The map URI template value can take the following forms:
-            {workflow->input-name}: 'input-name' must be part of workflow-level
+            ${workflow->input-name}: 'input-name' must be part of workflow-level
                 inputs (i.e., self._inputs)
-            {step-name->output}: 'step-name' must be a valid step name, and
+            ${step-name->output}: 'step-name' must be a valid step name, and
                 must be listed in the 'depend' list.
 
         Args:
@@ -255,7 +255,7 @@ class WorkflowStep(StageableData):
             # map URI is an optional definition field
             self._map_uri = ''
         else:
-            match = re.match(r'{([^{}]+)->([^{}]+)}', self._step['map']['uri'])
+            match = re.match(r'\${([^{}]+)->([^{}]+)}', self._step['map']['uri'])
             if match:
                 if match.group(1) == 'workflow': # use workflow-level input uri
                     # check if uri name is in input list
@@ -398,7 +398,7 @@ class WorkflowStep(StageableData):
                     groups = list(match.groups())
                     replace = {}
                     for i, group in enumerate(groups):
-                        replace[str('{'+str(i+1)+'}')] = str(group)
+                        replace[str('${'+str(i+1)+'}')] = str(group)
                     self._map.append({
                         'filename': filename,
                         'replace': replace,
@@ -452,14 +452,14 @@ class WorkflowStep(StageableData):
                 continue
 
             matches = re.findall(
-                r'{([^{}]+)->([^{}]+)}',
+                r'\${([^{}]+)->([^{}]+)}',
                 self._step['template'][template_item]
             )
 
             if matches:
 
                 for match in matches:
-                    key = '{'+match[0]+'->'+match[1]+'}'
+                    key = '${'+match[0]+'->'+match[1]+'}'
                     if match[0] == 'workflow':
                         # replace with workflow-level input or parameter
                         if match[1] in self._inputs:
