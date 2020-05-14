@@ -321,11 +321,20 @@ def run(args, other_args, subparser):
     )
 
     # add work URIs to job definition
+    work_uris = {}
+    for work_arg in dynamic_args.work:
+        parsed_work_uri = URIParser.parse(work_arg)
+        if not parsed_work_uri:
+            # skip if invalid URI
+            Log.a().warning('invalid work uri: %s', work_arg)
+        else:
+            work_uris[parsed_work_uri['scheme']] = parsed_work_uri['chopped_uri']
+
     apply_job_modifiers(
         jobs_dict,
         [
-            'work_uri.{}={}'.format(*work_arg.split(':', 1)[0:2])
-            for work_arg in dynamic_args.work
+            'work_uri.{}={}'.format(context, work_uris[context])
+            for context in work_uris
         ]
     )
 

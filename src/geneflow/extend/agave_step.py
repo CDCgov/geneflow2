@@ -555,7 +555,7 @@ class AgaveStep(WorkflowStep):
                 uri=map_item['run'][map_item['attempt']]['archive_uri'],
                 agave=self._agave
             )
-            if not agave_log_list:
+            if agave_log_list is False:
                 msg = 'cannot get agave log list for step "{}"'\
                     .format(self._step['name'])
                 Log.an().error(msg)
@@ -612,7 +612,7 @@ class AgaveStep(WorkflowStep):
                     uri=src_log_dir,
                     agave=self._agave
                 )
-                if not log_list:
+                if log_list is False:
                     msg = 'cannot get _log list for step "{}"'\
                         .format(self._step['name'])
                     Log.an().error(msg)
