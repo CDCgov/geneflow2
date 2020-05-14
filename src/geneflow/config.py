@@ -6,7 +6,7 @@ import yaml
 
 from geneflow.log import Log
 
-GF_VERSION = 'v1.0'
+GF_VERSION = 'v2.0'
 
 CONFIG_MAIN_SCHEMA = {
     GF_VERSION: {

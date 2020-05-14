@@ -102,7 +102,7 @@ class AgaveStep(WorkflowStep):
             return self._fatal(msg)
 
         # make sure app has an agave definition
-        if 'agave' not in self._app['definition']:
+        if 'agave' not in self._app['implementation']:
             msg = (
                 '"agave" step class can only be instantiated with an app that'
                 ' has an "agave" definition'
@@ -274,13 +274,24 @@ class AgaveStep(WorkflowStep):
         )
         app_template = {
             'name': name,
-            'appId': self._app['definition']['agave']['agave_app_id'],
+            'appId': self._app['implementation']['agave']['agave_app_id'],
             'archive': True,
             'inputs': inputs,
             'parameters': parameters,
             'archiveSystem': self._agave['parsed_archive_uri']['authority'],
             'archivePath': archive_path
         }
+        # specify processors if 'slots' param given
+        if 'slots' in self._step['execution']['parameters']:
+            app_template['processorsPerNode'] = int(
+                self._step['execution']['parameters']['slots']
+            )
+        # specify memory if 'mem' param given
+        if 'mem' in self._step['execution']['parameters']:
+            app_template['memoryPerNode'] = '{}'.format(
+                self._step['execution']['parameters']['mem']
+            )
+
         Log.some().debug(
                 "[step.%s]: agave app template:\n%s",
                 self._step['name'],
@@ -544,7 +555,7 @@ class AgaveStep(WorkflowStep):
                 uri=map_item['run'][map_item['attempt']]['archive_uri'],
                 agave=self._agave
             )
-            if not agave_log_list:
+            if agave_log_list is False:
                 msg = 'cannot get agave log list for step "{}"'\
                     .format(self._step['name'])
                 Log.an().error(msg)
@@ -601,7 +612,7 @@ class AgaveStep(WorkflowStep):
                     uri=src_log_dir,
                     agave=self._agave
                 )
-                if not log_list:
+                if log_list is False:
                     msg = 'cannot get _log list for step "{}"'\
                         .format(self._step['name'])
                     Log.an().error(msg)
