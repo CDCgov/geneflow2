@@ -44,8 +44,6 @@ class WorkflowInstaller:
             git_branch=None,
             force=False,
             app_name=None,
-            app_asset=None,
-            copy_prefix='/apps/standalone',
             clean=False,
             config=None,
             agave_params=None,
@@ -63,8 +61,6 @@ class WorkflowInstaller:
             git_branch: branch or tag of git repo
             force: delete existing folder before install?
             app_name: name of app to install
-            app_asset: type of app assets to install
-            copy_prefix: prefix for copy installs
             clean: delete apps folder before install?
             config: GeneFlow config dict that contains Agave client if needed
             agave_params: dict that contains agave parameters for
@@ -82,8 +78,6 @@ class WorkflowInstaller:
         self._git_branch = git_branch
         self._force = force
         self._app_name = app_name
-        self._app_asset = app_asset
-        self._copy_prefix = copy_prefix
         self._clean = clean
         self._make_apps = make_apps
 
@@ -143,11 +137,11 @@ class WorkflowInstaller:
     def _validate_workflow_package(self):
 
         package_path = Path(self._path)
-        if not Path(package_path / 'workflow').is_dir():
-            Log.an().error('missing "workflow" directory in workflow package')
+        if not Path(package_path).is_dir():
+            Log.an().error('workflow package path is not a directory: %s', package_path)
             return False
 
-        self._workflow_yaml = Path(package_path / 'workflow' / 'workflow.yaml')
+        self._workflow_yaml = Path(package_path / 'workflow.yaml')
 
         if not self._workflow_yaml.is_file():
             Log.an().error('missing workflow.yaml file in workflow package')
@@ -196,28 +190,6 @@ class WorkflowInstaller:
         return yaml_dict
 
 
-    def _load_apps_repo(self):
-
-        # read yaml file
-        self._apps_repo = self._yaml_to_dict(self._apps_repo_path)
-
-        # empty dict?
-        if not self._apps_repo:
-            Log.an().error(
-                'cannot load/parse apps repo file: %s', self._apps_repo_path
-            )
-            return False
-
-        # make sure it's a list with at least 1 app
-        if not self._apps_repo.get('apps'):
-            Log.an().error(
-                'apps repo must have an "apps" section with at least one app'
-            )
-            return False
-
-        return True
-
-
     def _clone_workflow(self):
 
         if not self._git:
@@ -261,7 +233,7 @@ class WorkflowInstaller:
             None
 
         """
-        apps_path = Path(self._path) / 'workflow' / 'apps'
+        apps_path = Path(self._path) / 'apps'
         if self._clean:
             # remove apps folder
             if apps_path.is_dir():
@@ -276,7 +248,7 @@ class WorkflowInstaller:
                 Log.some().info(
                     'app: %s:%s [%s]',
                     app,
-                    self._workflow['apps'][app]['repo'],
+                    self._workflow['apps'][app]['git'],
                     self._workflow['apps'][app]['version']
                 )
 
@@ -288,9 +260,7 @@ class WorkflowInstaller:
                     {
                         'name': app,
                         **self._workflow['apps'][app]
-                    },
-                    self._app_asset,
-                    self._copy_prefix
+                    }
                 )
 
                 # clone app into install location
@@ -298,8 +268,8 @@ class WorkflowInstaller:
                     Log.an().error('cannot clone app to %s', str(repo_path))
                     return False
 
-                if not app_installer.load_config():
-                    Log.an().error('cannot load app config.yaml')
+                if not app_installer.load_app():
+                    Log.an().error('cannot load app config')
                     return False
 
                 if self._make_apps:
@@ -307,9 +277,6 @@ class WorkflowInstaller:
                         Log.an().error('cannot compile app templates')
                         return False
 
-                if not app_installer.install_assets():
-                    Log.an().error('cannot install app assets')
-                    return False
 
                 # register in Agave
                 if (
@@ -333,29 +300,24 @@ class WorkflowInstaller:
                         pprint.pformat(register_result)
                     )
 
-                    # compile jinja template for published app definition
-                    if not TemplateCompiler.compile_template(
-                            repo_path,
-                            'app.yaml.j2',
-                            repo_path / 'app.yaml',
-                            agave=self._agave_params['agave'],
-                            version=register_result['version'],
-                            revision=register_result['revision']
+                    # update app definition with implementation section
+                    if not app_installer.update_def(
+                        agave={
+                            'apps_prefix': self._agave_params['agave']['appsPrefix'],
+                            'revision': register_result['revision']
+                        }
                     ):
                         Log.an().error(
-                            'cannot compile app "%s" definition from template',
+                            'cannot update app "%s" definition',
                             app
                         )
                         return False
 
                 else:
-
-                    # compile jinja template for app definition
-                    if not TemplateCompiler.compile_template(
-                            repo_path, 'app.yaml.j2', repo_path / 'app.yaml'
-                    ):
+                    # update app definition with implementation section
+                    if not app_installer.update_def(agave=None):
                         Log.an().error(
-                            'cannot compile app "%s" definition from template',
+                            'cannot update app "%s" definition',
                             app
                         )
                         return False

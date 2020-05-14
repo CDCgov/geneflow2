@@ -154,14 +154,14 @@ class Workflow:
             '\n    Workflow: {}'
             '\n        Version: {}'
             '\n        Description: {}'
-            '\n        Repo: {}'
+            '\n        Git: {}'
         ).format(
             self._job['name'],
             self._job_id,
             self._workflow['name'],
             self._workflow['version'],
             self._workflow['description'],
-            self._workflow['repo_uri']
+            self._workflow['git']
         )
 
         str_rep += '\n    Inputs: '
@@ -715,6 +715,11 @@ class Workflow:
         return True
 
 
+    def _re_init(self):
+        """Reinitialize connection object."""
+        return True
+
+
     def run(self):
         """
         Run Workflow.
@@ -746,12 +751,18 @@ class Workflow:
 
             else: # step node
 
+                # Reinit connection to exec context
+                if not self._re_init():
+                    msg = 'cannot reinit exec context'
+                    Log.an().error(msg)
+                    return self._fatal(msg)
+
                 Log.some().info(
                     '[%s]: app: %s:%s [%s]',
                     node_name,
                     node['node']._app['name'],
                     node['node']._app['version'],
-                    node['node']._app['repo_uri']
+                    node['node']._app['git']
                 )
 
                 Log.some().debug('[%s]: iterating map uri', node_name)

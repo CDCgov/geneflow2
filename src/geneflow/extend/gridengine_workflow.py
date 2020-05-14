@@ -27,6 +27,7 @@ class GridengineWorkflow:
         # drmaa library for grid engine
         self._drmaa_session = drmaa.Session()
 
+
     def __del__(self):
         """
         Disconnect from drmaa session when workflow class is deleted.
@@ -93,3 +94,25 @@ class GridengineWorkflow:
         return {
             'drmaa_session': self._drmaa_session
         }
+
+
+    def _re_init():
+        """Reinit drmaa session."""
+        # exit existing session
+        try:
+            self._drmaa_session.exit()
+        except drmaa.errors.DrmaaException as err:
+            Log.a().warning(
+                'cannot exit drmaa session: [%s]', str(err)
+            )
+
+        # initialize session again
+        try:
+            self._drmaa_session.initialize()
+        except drmaa.errors.DrmaaException as err:
+            Log.an().error(
+                'cannot initialize drmaa session: [%s]', str(err)
+            )
+            return False
+
+        return True

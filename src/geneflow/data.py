@@ -36,10 +36,9 @@ class WorkflowEntity(Base):
     id = Column(String, primary_key=True)
     name = Column(String)
     description = Column(String, default='')
-    repo_uri = Column(String, default='')
+    git = Column(String, default='')
     version = Column(String, default='')
     username = Column(String, default='')
-    documentation_uri = Column(Text, default='')
     inputs = Column(Text, default='')
     parameters = Column(Text, default='')
     final_output = Column(Text, default='')
@@ -58,12 +57,15 @@ class AppEntity(Base):
     id = Column(String, primary_key=True)
     name = Column(String, default='')
     description = Column(String, default='')
-    repo_uri = Column(String, default='')
+    git = Column(String, default='')
     version = Column(String, default='')
     username = Column(String, default='')
-    definition = Column(Text, default='')
+    implementation = Column(Text, default='')
     inputs = Column(Text, default='')
     parameters = Column(Text, default='')
+    pre_exec = Column(Text, default='')
+    exec_methods = Column(Text, default='')
+    post_exec = Column(Text, default='')
     public = Column(Boolean, default=False)
 
 
@@ -431,9 +433,8 @@ class DataSource:
                 WorkflowEntity.name,
                 WorkflowEntity.description,
                 WorkflowEntity.username,
-                WorkflowEntity.repo_uri,
+                WorkflowEntity.git,
                 WorkflowEntity.version,
-                WorkflowEntity.documentation_uri,
                 WorkflowEntity.inputs,
                 WorkflowEntity.parameters,
                 WorkflowEntity.final_output,
@@ -450,15 +451,14 @@ class DataSource:
                     'name': row[1],
                     'description': row[2],
                     'username': row[3],
-                    'repo_uri': row[4],
+                    'git': row[4],
                     'version': row[5],
-                    'documentation_uri': row[6],
-                    'inputs': json.loads(row[7]),
-                    'parameters': json.loads(row[8]),
-                    'final_output': json.loads(row[9]),
-                    'apps': json.loads(row[10]),
-                    'public': row[11],
-                    'enable': row[12],
+                    'inputs': json.loads(row[6]),
+                    'parameters': json.loads(row[7]),
+                    'final_output': json.loads(row[8]),
+                    'apps': json.loads(row[9]),
+                    'public': row[10],
+                    'enable': row[11],
                     'steps': {}
                 } for row in result
             ]
@@ -504,13 +504,16 @@ class DataSource:
                 AppEntity.id,
                 AppEntity.name,
                 AppEntity.description,
-                AppEntity.repo_uri,
+                AppEntity.git,
                 AppEntity.version,
                 AppEntity.public,
                 AppEntity.username,
                 AppEntity.inputs,
                 AppEntity.parameters,
-                AppEntity.definition
+                AppEntity.implementation,
+                AppEntity.pre_exec,
+                AppEntity.exec_methods,
+                AppEntity.post_exec
             ).\
                 filter(StepEntity.workflow_id == workflow_id).\
                 filter(StepEntity.app_id == AppEntity.id).\
@@ -521,13 +524,16 @@ class DataSource:
                     'app_id': row[0],
                     'name': row[1],
                     'description': row[2],
-                    'repo_uri': row[3],
+                    'git': row[3],
                     'version': row[4],
                     'public': row[5],
                     'username': row[6],
                     'inputs': json.loads(row[7]),
                     'parameters': json.loads(row[8]),
-                    'definition': json.loads(row[9])
+                    'implementation': json.loads(row[9]),
+                    'pre_exec': json.loads(row[10]),
+                    'exec_methods': json.loads(row[11]),
+                    'post_exec': json.loads(row[12])
                 } for row in result
             }
 
@@ -627,9 +633,8 @@ class DataSource:
                 name=data['name'],
                 description=data['description'],
                 username=data['username'],
-                repo_uri=data['repo_uri'],
+                git=data['git'],
                 version=data['version'],
-                documentation_uri=data['documentation_uri'],
                 inputs=data['inputs'],
                 parameters=data['parameters'],
                 final_output=data['final_output'],
@@ -830,13 +835,17 @@ class DataSource:
                 id=app_id,
                 name=data['name'],
                 description=data['description'],
-                repo_uri=data['repo_uri'],
+                git=data['git'],
                 version=data['version'],
                 username=data['username'],
                 public=data['public'],
-                definition=data['definition'],
+                implementation=data['implementation'],
                 inputs=data['inputs'],
-                parameters=data['parameters']
+                parameters=data['parameters'],
+                pre_exec=data['pre_exec'],
+                exec_methods=data['exec_methods'],
+                post_exec=data['post_exec']
+
             ))
         except SQLAlchemyError as err:
             Log.an().error('sql exception [%s]', str(err))
@@ -1665,15 +1674,18 @@ class DataSource:
                 return False
 
             app_id = self.add_app({
-                'name'          : valid_def['name'],
-                'description'   : valid_def['description'],
-                'repo_uri'      : valid_def['repo_uri'],
-                'version'       : valid_def['version'],
-                'username'      : valid_def['username'],
-                'public'        : valid_def['public'],
-                'definition'    : json.dumps(valid_def['definition']),
-                'inputs'        : json.dumps(valid_def['inputs']),
-                'parameters'    : json.dumps(valid_def['parameters'])
+                'name': valid_def['name'],
+                'description': valid_def['description'],
+                'git': valid_def['git'],
+                'version': valid_def['version'],
+                'username': valid_def['username'],
+                'public': valid_def['public'],
+                'implementation': json.dumps(valid_def['implementation']),
+                'inputs': json.dumps(valid_def['inputs']),
+                'parameters': json.dumps(valid_def['parameters']),
+                'pre_exec': json.dumps(valid_def['pre_exec']),
+                'exec_methods': json.dumps(valid_def['exec_methods']),
+                'post_exec': json.dumps(valid_def['post_exec'])
             })
             if not app_id:
                 Log.an().error(
@@ -1779,15 +1791,18 @@ class DataSource:
         if not self.update_app(
                 valid_def['app_id'],
                 {
-                    'name'          : valid_def['name'],
-                    'description'   : valid_def['description'],
-                    'repo_uri'      : valid_def['repo_uri'],
-                    'version'       : valid_def['version'],
-                    'username'      : valid_def['username'],
-                    'public'        : valid_def['public'],
-                    'definition'    : json.dumps(valid_def['definition']),
-                    'inputs'        : json.dumps(valid_def['inputs']),
-                    'parameters'    : json.dumps(valid_def['parameters'])
+                    'name': valid_def['name'],
+                    'description': valid_def['description'],
+                    'git': valid_def['git'],
+                    'version': valid_def['version'],
+                    'username': valid_def['username'],
+                    'public': valid_def['public'],
+                    'implementation': json.dumps(valid_def['implementation']),
+                    'inputs': json.dumps(valid_def['inputs']),
+                    'parameters': json.dumps(valid_def['parameters']),
+                    'pre_exec': json.dumps(valid_def['pre_exec']),
+                    'exec_methods': json.dumps(valid_def['exec_methods']),
+                    'post_exec': json.dumps(valid_def['post_exec']),
                 }
         ):
             Log.an().error(
@@ -1858,10 +1873,6 @@ class DataSource:
                     # app not yet loaded
 
                     # import app definition
-                    #if not os.path.isabs(step['app']):
-                    #    app_path = os.path.join(base_path, step['app'])
-                    #else:
-                    #    app_path = step['app']
                     app_path = os.path.join(base_path, 'apps', step['app'], 'app.yaml')
 
                     apps = self.import_apps_from_def(app_path)
@@ -2150,18 +2161,17 @@ class DataSource:
 
             # insert workflow record
             workflow_id = self.add_workflow({
-                'name'              : valid_def['name'],
-                'description'       : valid_def['description'],
-                'username'          : valid_def['username'],
-                'inputs'            : json.dumps(valid_def['inputs']),
-                'apps'              : json.dumps(valid_def['apps']),
-                'repo_uri'          : valid_def['repo_uri'],
-                'documentation_uri' : valid_def['documentation_uri'],
-                'parameters'        : json.dumps(valid_def['parameters']),
-                'final_output'      : json.dumps(valid_def['final_output']),
-                'public'            : valid_def['public'],
-                'enable'            : valid_def['enable'],
-                'version'           : valid_def['version']
+                'name': valid_def['name'],
+                'description': valid_def['description'],
+                'username': valid_def['username'],
+                'inputs': json.dumps(valid_def['inputs']),
+                'apps': json.dumps(valid_def['apps']),
+                'git': valid_def['git'],
+                'parameters': json.dumps(valid_def['parameters']),
+                'final_output': json.dumps(valid_def['final_output']),
+                'public': valid_def['public'],
+                'enable': valid_def['enable'],
+                'version': valid_def['version']
             })
             if not workflow_id:
                 Log.an().error(
@@ -2306,18 +2316,17 @@ class DataSource:
         if not self.update_workflow(
                 valid_def['workflow_id'],
                 {
-                    'name':              valid_def['name'],
-                    'description':       valid_def['description'],
-                    'username':          valid_def['username'],
-                    'repo_uri':          valid_def['repo_uri'],
-                    'documentation_uri': valid_def['documentation_uri'],
-                    'inputs':            json.dumps(valid_def['inputs']),
-                    'parameters':        json.dumps(valid_def['parameters']),
-                    'final_output':      json.dumps(valid_def['final_output']),
-                    'apps':              json.dumps(valid_def['apps']),
-                    'public':            valid_def['public'],
-                    'enable':            valid_def['enable'],
-                    'version':           valid_def['version']
+                    'name': valid_def['name'],
+                    'description': valid_def['description'],
+                    'username': valid_def['username'],
+                    'git': valid_def['git'],
+                    'inputs': json.dumps(valid_def['inputs']),
+                    'parameters': json.dumps(valid_def['parameters']),
+                    'final_output': json.dumps(valid_def['final_output']),
+                    'apps': json.dumps(valid_def['apps']),
+                    'public': valid_def['public'],
+                    'enable': valid_def['enable'],
+                    'version': valid_def['version']
                 }
         ):
             Log.an().error(

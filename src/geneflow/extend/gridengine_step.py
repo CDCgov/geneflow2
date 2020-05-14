@@ -92,12 +92,12 @@ class GridengineStep(WorkflowStep):
             Log.an().error(msg)
             return self._fatal(msg)
 
-        # make sure app has a local definition
+        # make sure app has a local implementation
         #   local def can be used by gridengine because it just needs a shell script
-        if 'local' not in self._app['definition']:
+        if 'local' not in self._app['implementation']:
             msg = (
                 '"gridengine" step class can only be instantiated with an app that'
-                ' has a "local" definition'
+                ' has a "local" implementation'
             )
             Log.an().error(msg)
             return self._fatal(msg)
@@ -234,10 +234,10 @@ class GridengineStep(WorkflowStep):
                     = self._app['parameters'][param_key]['default']
 
         # get full path of wrapper script
-        path = shutil.which(self._app['definition']['local']['script'])
+        path = shutil.which(self._app['implementation']['local']['script'])
         if not path:
             msg = 'wrapper script not found in path: %s'.format(
-                self._app['definition']['local']['script']
+                self._app['implementation']['local']['script']
             )
             Log.an().error(msg)
             return self._fatal(msg)
@@ -273,19 +273,24 @@ class GridengineStep(WorkflowStep):
             ' '.join(args)
         )
 
-        # construct paths for logging stdout and stderr
-        log_path = '{}/_log/gf-{}-{}-{}'.format(
-            self._parsed_data_uris[self._source_context]['chopped_path'],
+        # construct job name
+        name = 'gf-{}-{}-{}'.format(
             map_item['attempt'],
             slugify(self._step['name']),
             slugify(map_item['template']['output'])
+        )
+
+        # construct paths for logging stdout and stderr
+        log_path = '{}/_log/{}'.format(
+            self._parsed_data_uris[self._source_context]['chopped_path'],
+            name
         )
 
         # create and populate job template
         jt = self._gridengine['drmaa_session'].createJobTemplate()
         jt.remoteCommand = '/bin/bash'
         jt.args = args
-        jt.jobName = slugify(self._job['name'])
+        jt.jobName = name
         jt.errorPath = ':{}.err'.format(log_path)
         jt.outputPath = ':{}.out'.format(log_path)
 

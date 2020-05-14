@@ -15,8 +15,7 @@ CREATE TABLE workflow (
     description VARCHAR(256) NOT NULL DEFAULT '',
     version VARCHAR(32) NOT NULL DEFAULT '',
     username VARCHAR(32) NOT NULL DEFAULT '',
-    repo_uri TEXT NOT NULL DEFAULT '',
-    documentation_uri TEXT NOT NULL DEFAULT '',
+    git TEXT NOT NULL DEFAULT '',
     inputs TEXT NOT NULL DEFAULT '',
     parameters TEXT NOT NULL DEFAULT '',
     final_output TEXT NOT NULL DEFAULT '',
@@ -39,13 +38,16 @@ CREATE TABLE app (
     id CHAR(32) NOT NULL,
     name VARCHAR(256) NOT NULL DEFAULT '',
     description VARCHAR(256) NOT NULL DEFAULT '',
-    repo_uri TEXT NOT NULL DEFAULT '',
+    git TEXT NOT NULL DEFAULT '',
     version VARCHAR(32) NOT NULL DEFAULT '',
     username VARCHAR(32) NOT NULL DEFAULT '',
-    definition TEXT NOT NULL DEFAULT '',
+    implementation TEXT NOT NULL DEFAULT '',
     inputs TEXT NOT NULL DEFAULT '',
     parameters TEXT NOT NULL DEFAULT '',
     public TINYINT NOT NULL DEFAULT 0,
+    pre_exec TEXT NOT NULL DEFAULT '',
+    exec_methods TEXT NOT NULL DEFAULT '',
+    post_exec TEXT NOT NULL DEFAULT '',
     PRIMARY KEY (id)
 );
 
