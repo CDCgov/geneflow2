@@ -1,11 +1,33 @@
 # Changelog
 
 
-## 2020/04/15 - v2.0.0-alpha.3: bug fix release
+## 2020/05/14 - v2.0.0-alpha.3: enhancement and bug fix release
 
-1. Fix bug: Run pending jobs CLI does not change status of pending jobs fast enough.
+1. Simplify workflow and app structure.
 
-2. Fix bug: App version numbers with invalid characters cause Agave registration to fail.
+    a. Flatten directory structure.
+
+    b. Remove assets functionality from apps.
+
+    c. Remove SINGULARITY and DOCKER variables from wrapper script.
+
+    d. Rename and simplify definition fields.
+
+2. Add "slots" and "mem" execution parameters for Agave.
+
+3. Change template match string from "{}" to "${}".
+
+4. Fix bug: Run pending jobs CLI does not change status of pending jobs fast enough.
+
+5. Fix bug: App version numbers with invalid characters cause Agave registration to fail.
+
+6. Fix bug: Empty --ec, --ep, or --em parameters cause error.
+
+7. Fix bug: Re-organize run.py dynamic arg parsing.
+
+8. Fix bug: Re-initialize drmaa grid engine session before each step.
+
+9. Fix bug: Update dependency versions in requirements files.
 
 
 ## 2020/04/08 - v2.0.0-alpha.2: simplify CLI arguments

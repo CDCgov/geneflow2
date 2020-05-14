@@ -56,23 +56,6 @@ def init_subparser(subparsers):
         help='Name of app to install. If omitted, all apps are installed'
     )
     parser.add_argument(
-        '-a', '--asset',
-        type=str,
-        required=False,
-        default=None,
-        help=(
-            'Package asset type to install '
-            '(package, singularity, build-package, build-singularity, none)'
-        )
-    )
-    parser.add_argument(
-        '-p', '--prefix',
-        type=str,
-        required=False,
-        default=None,
-        help='Package or container prefix for copy installs'
-    )
-    parser.add_argument(
         '-c', '--clean', action='store_true',
         required=False,
         help='Clean apps folder before install'
@@ -255,8 +238,6 @@ def install_workflow(args, other_args, subparser=None):
         git_branch=args.git_branch,
         force=args.force,
         app_name=args.name,
-        app_asset=args.asset,
-        copy_prefix=args.prefix,
         clean=args.clean,
         config=config_dict,
         agave_params=agave_params,
@@ -277,5 +258,5 @@ def install_workflow(args, other_args, subparser=None):
         if not wf_installer.upload_agave_test_data():
             Log.an().error('cannot upload agave test data')
             return False
-
+        
     return True
