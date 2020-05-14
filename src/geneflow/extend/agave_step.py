@@ -281,6 +281,17 @@ class AgaveStep(WorkflowStep):
             'archiveSystem': self._agave['parsed_archive_uri']['authority'],
             'archivePath': archive_path
         }
+        # specify processors if 'slots' param given
+        if 'slots' in self._step['execution']['parameters']:
+            app_template['processorsPerNode'] = int(
+                self._step['execution']['parameters']['slots']
+            )
+        # specify memory if 'mem' param given
+        if 'mem' in self._step['execution']['parameters']:
+            app_template['memoryPerNode'] = '{}'.format(
+                self._step['execution']['parameters']['mem']
+            )
+
         Log.some().debug(
                 "[step.%s]: agave app template:\n%s",
                 self._step['name'],

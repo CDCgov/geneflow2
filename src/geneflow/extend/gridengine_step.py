@@ -273,19 +273,24 @@ class GridengineStep(WorkflowStep):
             ' '.join(args)
         )
 
-        # construct paths for logging stdout and stderr
-        log_path = '{}/_log/gf-{}-{}-{}'.format(
-            self._parsed_data_uris[self._source_context]['chopped_path'],
+        # construct job name
+        name = 'gf-{}-{}-{}'.format(
             map_item['attempt'],
             slugify(self._step['name']),
             slugify(map_item['template']['output'])
+        )
+
+        # construct paths for logging stdout and stderr
+        log_path = '{}/_log/{}'.format(
+            self._parsed_data_uris[self._source_context]['chopped_path'],
+            name
         )
 
         # create and populate job template
         jt = self._gridengine['drmaa_session'].createJobTemplate()
         jt.remoteCommand = '/bin/bash'
         jt.args = args
-        jt.jobName = slugify(self._job['name'])
+        jt.jobName = name
         jt.errorPath = ':{}.err'.format(log_path)
         jt.outputPath = ':{}.out'.format(log_path)
 
