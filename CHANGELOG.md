@@ -1,5 +1,13 @@
 # Changelog
 
+## 2020/05/26 - v2.0.0-alpha.4: enhancement and bug fix release
+
+1. Add "test" field to workflow schema to indicate test workflows.
+
+2. Fix bug: CLI help displays more detailed instructions.
+
+3. Work directory, execution context, method, and param options can be specified as lists.
+
 
 ## 2020/05/14 - v2.0.0-alpha.3: enhancement and bug fix release
 
