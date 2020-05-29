@@ -31,7 +31,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(
         description='GeneFlow CLI',
-        prog='GeneFlow'
+        prog='gf'
     )
 
     # print version

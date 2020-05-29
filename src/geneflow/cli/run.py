@@ -150,32 +150,32 @@ def parse_dynamic_args(other_args, workflow_dict):
     )
     dynamic_parser.add_argument(
         '-w', '--work',
+        nargs='+',
         type=str,
-        action='append',
         default=[],
         help='work directory'
     )
     dynamic_parser.add_argument(
         '--exec-context', '--ec',
+        nargs='+',
         type=str,
         dest='exec_context',
-        action='append',
         default=[],
         help='execution contexts'
     )
     dynamic_parser.add_argument(
         '--exec-method', '--em',
+        nargs='+',
         type=str,
         dest='exec_method',
-        action='append',
         default=[],
         help='execution methods'
     )
     dynamic_parser.add_argument(
         '--exec-param', '--ep',
+        nargs='+',
         type=str,
         dest='exec_param',
-        action='append',
         default=[],
         help='execution parameters'
     )
@@ -185,14 +185,16 @@ def parse_dynamic_args(other_args, workflow_dict):
             '--in.{}'.format(input_key),
             dest='inputs.{}'.format(input_key),
             required=False,
-            default=workflow_dict['inputs'][input_key]['default']
+            default=workflow_dict['inputs'][input_key]['default'],
+            help=workflow_dict['inputs'][input_key]['label']
         )
     for param_key in workflow_dict['parameters']:
         dynamic_parser.add_argument(
             '--param.{}'.format(param_key),
             dest='parameters.{}'.format(param_key),
             required=False,
-            default=workflow_dict['parameters'][param_key]['default']
+            default=workflow_dict['parameters'][param_key]['default'],
+            help=workflow_dict['parameters'][param_key]['label']
         )
 
     dynamic_args = dynamic_parser.parse_args(other_args)

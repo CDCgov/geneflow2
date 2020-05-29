@@ -1,6 +1,6 @@
 # GeneFlow
 
-Version: 2.0.0-alpha.3
+Version: 2.0.0-alpha.4
 
 GeneFlow (GF) is a light-weight platform-agnostic workflow engine for scientific computing.
 
@@ -44,7 +44,7 @@ If you need to install GeneFlow, it is recommended to use a Python3 virtual envi
 2.  Clone the GeneFlow source repository:
 
     ```
-    git clone https://github.com/CDCgov/geneflow
+    git clone https://github.com/CDCgov/geneflow2
     ```
 
 3.  Install GeneFlow:
@@ -65,7 +65,7 @@ Additional documentation can be found [here](https://geneflow.gitlab.io/). Alter
 
 ```
 cd ~/geneflow_work
-git clone https://github.com/CDCgov/geneflow
+git clone https://github.com/CDCgov/geneflow2
 cd geneflow/docs
 make html
 make latexpdf
