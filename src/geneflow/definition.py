@@ -190,7 +190,7 @@ APP_SCHEMA = {
                     'default': {'type': 'string', 'default': ''},
                     'value': {'type': 'string', 'default': ''},
                     'script_default': {'type': 'string', 'nullable': True},
-                    'required': {'type': 'boolean', 'required': True},
+                    'required': {'type': 'boolean', 'default': False},
                     'test_value': {'type': 'string', 'nullable': True},
                     'post_exec': {
                         'type': 'list',
@@ -220,7 +220,7 @@ APP_SCHEMA = {
                     },
                     'default': {'nullable': True, 'default': None},
                     'value': {'nullable': True, 'default': None},
-                    'required': {'type': 'boolean', 'required': True},
+                    'required': {'type': 'boolean', 'default': False},
                     'test_value': {'nullable': True},
                     'post_exec': {
                         'type': 'list',
