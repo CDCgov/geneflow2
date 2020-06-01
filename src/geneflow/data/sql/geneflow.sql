@@ -1,4 +1,4 @@
--- workflow schema v20171005-00
+-- workflow schema 20200526-00
 
 drop table if exists workflow;
 drop table if exists app;
@@ -21,6 +21,7 @@ create table workflow (
     apps text not null default '',
     public tinyint not null default 0,
     enable tinyint not null default 1,
+    test tinyint not null default 0,
     created timestamp default '0000-00-00 00:00:00',
     modified timestamp default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
     primary key (id)
