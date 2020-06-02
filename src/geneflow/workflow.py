@@ -739,7 +739,7 @@ class Workflow:
             if node['type'] == 'input':
                 Log.some().debug('[%s]: staging input', node_name)
                 if not node['node'].stage(
-                        move_final=false,
+                        move_final=False,
                         **{
                             context: self._workflow_context[context]\
                                 .get_context_options()\

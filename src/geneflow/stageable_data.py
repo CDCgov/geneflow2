@@ -89,7 +89,7 @@ class StageableData:
         return True
 
 
-    def stage(self, move_final=false, **kwargs):
+    def stage(self, move_final=False, **kwargs):
         """
         Copy data to all contexts from source URI.
 
