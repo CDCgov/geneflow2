@@ -8,6 +8,8 @@
 
 3. Work directory, execution context, method, and param options can be specified as lists.
 
+4. Move final data to output directory instead of copying for local contexts.
+
 
 ## 2020/05/14 - v2.0.0-alpha.3: enhancement and bug fix release
 

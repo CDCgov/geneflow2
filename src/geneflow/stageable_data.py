@@ -89,7 +89,7 @@ class StageableData:
         return True
 
 
-    def stage(self, **kwargs):
+    def stage(self, move_final=false, **kwargs):
         """
         Copy data to all contexts from source URI.
 
@@ -118,19 +118,41 @@ class StageableData:
                     )
                 )
 
-                if not DataManager.copy(
-                        parsed_src_uri=self._parsed_data_uris\
-                            [self._source_context],
-                        parsed_dest_uri=self._parsed_data_uris[context],
-                        **kwargs
+                if (
+                        move_final
+                        and self._context == 'final'
+                        and self._parsed_data_uris[self._source_context]['scheme'] == 'local'
+                        and self._parsed_data_uris[context]['scheme'] == 'local'
                 ):
-                    msg = 'cannot stage data by copying from {} to {}'.format(
-                        self._parsed_data_uris[self._source_context]\
-                            ['chopped_uri'],
-                        self._parsed_data_uris[context]['chopped_uri']
-                    )
-                    Log.an().error(msg)
-                    return self._fatal(msg)
+                    # move final data instead of copy, only for local-->local schemes
+                    if not DataManager.move(
+                            parsed_src_uri=self._parsed_data_uris\
+                                [self._source_context],
+                            parsed_dest_uri=self._parsed_data_uris[context],
+                            **kwargs
+                    ):
+                        msg = 'cannot stage data by copying from {} to {}'.format(
+                            self._parsed_data_uris[self._source_context]\
+                                ['chopped_uri'],
+                            self._parsed_data_uris[context]['chopped_uri']
+                        )
+                        Log.an().error(msg)
+                        return self._fatal(msg)
+
+                else:
+                    if not DataManager.copy(
+                            parsed_src_uri=self._parsed_data_uris\
+                                [self._source_context],
+                            parsed_dest_uri=self._parsed_data_uris[context],
+                            **kwargs
+                    ):
+                        msg = 'cannot stage data by copying from {} to {}'.format(
+                            self._parsed_data_uris[self._source_context]\
+                                ['chopped_uri'],
+                            self._parsed_data_uris[context]['chopped_uri']
+                        )
+                        Log.an().error(msg)
+                        return self._fatal(msg)
 
         self._staged = True
 

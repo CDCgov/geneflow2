@@ -251,6 +251,70 @@ class DataManager:
         )
 
 
+    @classmethod
+    def move(
+            cls,
+            src_uri=None,
+            parsed_src_uri=None,
+            dest_uri=None,
+            parsed_dest_uri=None,
+            **kwargs
+    ):
+        """
+        Move data to/from/within workflow contexts.
+
+        Source and destination URIs are parsed to extract contexts, and
+        the appropriate methods are called accordingly.
+
+        Args:
+            src: Source URI.
+            dest: Destination URI.
+            **kwargs: Other arguments specific to context.
+
+        Returns:
+            On success: True.
+            On failure: False.
+
+        """
+        # parse and validate src URI
+        if not parsed_src_uri:
+            parsed_src_uri = URIParser.parse(src_uri)
+            if not parsed_src_uri:
+                Log.an().error('invalid src uri: %s', src_uri)
+                return False
+
+        # parse and validate dest URI
+        if not parsed_dest_uri:
+            parsed_dest_uri = URIParser.parse(dest_uri)
+            if not parsed_dest_uri:
+                Log.an().error('invalid dest uri: %s', dest_uri)
+                return False
+
+        # check if copy method exists for contexts
+        try:
+            move_func = getattr(cls, '_move_{}_{}'.format(
+                parsed_src_uri['scheme'], parsed_dest_uri['scheme']
+            ))
+        except AttributeError:
+            Log.an().error(
+                '_move_%s_%s method not defined',
+                parsed_src_uri['scheme'],
+                parsed_dest_uri['scheme']
+            )
+            return False
+
+        return move_func(
+            parsed_src_uri,
+            parsed_dest_uri,
+            **{
+                list_item: kwargs[list_item]
+                for list_item in set(
+                    [parsed_src_uri['scheme'], parsed_dest_uri['scheme']]
+                )
+            }
+        )
+
+
 def init():
     """Import methods in the data_manager_contexts module as static methods."""
     all_funcs = inspect.getmembers(data_manager_contexts, inspect.isfunction)
