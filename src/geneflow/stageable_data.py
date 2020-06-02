@@ -120,7 +120,7 @@ class StageableData:
 
                 if (
                         move_final
-                        and self._context == 'final'
+                        and context == 'final'
                         and self._parsed_data_uris[self._source_context]['scheme'] == 'local'
                         and self._parsed_data_uris[context]['scheme'] == 'local'
                 ):
