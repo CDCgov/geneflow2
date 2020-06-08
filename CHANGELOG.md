@@ -1,6 +1,6 @@
 # Changelog
 
-## 2020/05/26 - v2.0.0-alpha.4: enhancement and bug fix release
+## 2020/06/10 - v2.0.0-alpha.4: enhancement and bug fix release
 
 1. Add "test" field to workflow schema to indicate test workflows.
 
@@ -9,6 +9,8 @@
 3. Work directory, execution context, method, and param options can be specified as lists.
 
 4. Move final data to output directory instead of copying for local contexts.
+
+5. Add "Gooey" graphical interface option for running workflows.
 
 
 ## 2020/05/14 - v2.0.0-alpha.3: enhancement and bug fix release

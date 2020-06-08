@@ -20,54 +20,31 @@ Clone the workflow template from the GeneFlow public workflows repository:
 
 .. code-block:: text
 
-    git clone https://gitlab.com/geneflow/workflows/workflow-template.git hello-world-workflow-gf
+    git clone https://gitlab.com/geneflow/workflows/workflow-template-gf2.git hello-world-workflow-gf2
 
-This command downloads the workflow template into the "hello-world-workflow-gf" directory, which also happens to be the name of the workflow for this tutorial. View the contents of the app template using the "tree" command:
+This command downloads the workflow template into the "hello-world-workflow-gf2" directory, which also happens to be the name of the workflow for this tutorial. View the contents of the app template using the "tree" command:
 
 .. code-block:: text
 
-    cd hello-world-workflow-gf
+    cd hello-world-workflow-gf2
     tree .
 
-You should see the workflow template directory structure:
+You should see the workflow template directory structure (it may have some extra files):
 
 .. code-block:: text
 
     .
     ├── data
     │   └── README.rst
-    ├── docs
-    │   └── README.rst
     ├── README.rst
-    └── workflow
-        ├── apps-repo.yaml
-        └── workflow.yaml
+    └── workflow.yaml
 
     3 directories, 5 files
 
-When creating a workflow, the "apps-repo.yaml" and "workflow.yaml" files must be modified. It is also recommended to edit the main "README.rst" file, add extended documentation in the "docs" directory, and add test data to the "data" directory. 
+When creating a workflow, the "workflow.yaml" file must be modified. It is also recommended to edit the main "README.rst" file, and add test data to the "data" directory. 
 
 Configure the Apps Repo
 -----------------------
-
-The "apps-repo.yaml" specifies all GeneFlow apps that the workflow uses. Edit this file so that the list includes only one app, the "Hello World!" app created in the previous tutorial:
-
-.. code-block:: text
-
-    vi ./workflow/apps-repo.yaml
-
-Delete the template entries and add the "Hello World!" app:
-
-.. code-block:: yaml
-
-    apps:
-    - name: hello-world
-      repo: https://github.com/[USER]/hello-world-gf.git
-      tag: '0.1'
-      folder: hello-world-gf-0.1
-      asset: none
-
-When editing this file, be sure to delete any other apps in the file so that the "Hello World!" app is the only app listed. Also be sure to replace the "repo" field with the correct Git repo to which you committed the "Hello World!" app. Save and close the file.
 
 Configure the Workflow
 ----------------------
@@ -85,11 +62,8 @@ name:
 description:
   This is a short description of the workflow, which should be limited to one sentence. Use "Hello World one-step workflow"
 
-documentation_uri:
-  This is a link to the workflow's extended documentation, which can be a website or PDF file. This may also be the URL of the "docs" directory in the workflow Git repo. In this tutorial, we will leave this field blank.
-
-repo_uri:
-  This is a link to the workflow's Git repo. You may either leave this field blank, or use the URL of the Git repo to which you intend to commit the workflow. E.g., https://github.com/[USER]/hello-world-workflow-gf.git.
+git:
+  This is a link to the workflow's Git repo. You may either leave this field blank, or use the URL of the Git repo to which you intend to commit the workflow. E.g., https://github.com/[USER]/hello-world-workflow-gf2.git.
 
 version:
   This is the version number of the workflow. We recommended to use a low version number, e.g., 0.1, if this is the first version of a workflow. In this example, use '0.1'. The version number must be quoted to ensure that it is a string. 
@@ -104,12 +78,25 @@ Once complete, the metadata section of the "workflow.yaml" should look similar t
     # metadata
     name: Hello World Workflow
     description: Hello World one-step workflow
-    documentation_uri:
-    repo_uri: 'https://github.com/[USER]/hello-world-workflow-gf.git'
+    git: https://github.com/[USER]/hello-world-workflow-gf2.git
     version: '0.1'
     username: user
 
-Be sure to replace the "repo_uri" with your specific Git repo.
+Be sure to replace the "git" field with your specific Git repo.
+
+Apps
+~~~~
+
+The "Apps" section specifies all GeneFlow apps that the workflow uses. Edit this section so that the list includes only one app, the "Hello World!" app created in the previous tutorial:
+
+.. code-block:: yaml
+
+    apps:
+      hello-world:
+        git: https://github.com/[USER]/hello-world-gf2.git
+        version: '0.1'
+
+When editing this section, be sure to delete any other apps in the file so that the "Hello World!" app is the only app listed. Also be sure to replace the "git" field with the correct Git repo to which you committed the "Hello World!" app.
 
 Final Output
 ~~~~~~~~~~~~
@@ -156,13 +143,13 @@ The "steps" section of the workflow definition defines all workflow steps and th
     # steps
     steps:
       hello:
-        app: apps/hello-world-gf-0.1/app.yaml
+        app: hello-world
         depend: []
         template:
-          file: '{workflow->file}'
+          file: ${workflow->file}
           output: output.txt
 
-The "app" section points to the location of the GeneFlow app definition and should always be relative to the "apps" directory. The blank "depend" list indicates that this step does not depend on any other steps. The "template" section defines the values passed to the "Hello World!" app inputs and parameters. ``{workflow->file}`` refers to the input "file" passed to the workflow. Thus, the "file" input passed to the workflow is passed to the "file" input of the "Hello World!" app.
+The "app" field points to the app defined in the "apps" section of the workflow definition. The blank "depend" list indicates that this step does not depend on any other steps. The "template" section defines the values passed to the "Hello World!" app inputs and parameters. ``${workflow->file}`` refers to the input "file" passed to the workflow. Thus, the "file" input passed to the workflow is passed to the "file" input of the "Hello World!" app.
 
 Save and close the "workflow.yaml" file. 
 
@@ -182,7 +169,7 @@ It is best practice to update the workflow README file to include the workflow n
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-workflow-gf
+    cd ~/geneflow_work/hello-world-workflow-gf2
     vi ./README.rst
 
 Modify the file so it looks like the following:
@@ -209,14 +196,14 @@ Modify the file so it looks like the following:
 Commit the Workflow to a Git Repo
 ---------------------------------
 
-We'll use GitHub as an example, but you may use GitLab, BitBucket, or your company/organization's Git repo instead. GitHub requires you to first create the repo on the GitHub.com site. Once created, it will likely be located at a URL similar to https://github.com/[user]/hello-world-workflow-gf.git, where [user] should be replaced with your GitHub username or group. If you're using a Git repo other than GitHub, refer to the instructions in the "Basic App: Hello World" tutorial.
+We'll use GitHub as an example, but you may use GitLab, BitBucket, or your company/organization's Git repo instead. GitHub requires you to first create the repo on the GitHub.com site. Once created, it will likely be located at a URL similar to https://github.com/[user]/hello-world-workflow-gf2.git, where [user] should be replaced with your GitHub username or group. If you're using a Git repo other than GitHub, refer to the instructions in the "Basic App: Hello World" tutorial.
 
 Before committing the workflow code, remove the "apps" directory, since this directory is created during workflow installation.
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-workflow-gf
-    rm -rf ./workflow/apps
+    cd ~/geneflow_work/hello-world-workflow-gf2
+    rm -rf ./apps
 
 Push the code to GitHub using the following commands: 
 
@@ -225,7 +212,7 @@ Push the code to GitHub using the following commands:
     git add -A
     git commit -m "initial version of the hello world workflow"
     git tag 0.1
-    git remote set-url origin https://github.com/[USER]/hello-world-workflow-gf.git
+    git remote set-url origin https://github.com/[USER]/hello-world-workflow-gf2.git
     git push --tags origin master
 
 Be sure to replace ``[USER]`` with your GitHub user or group.
@@ -238,7 +225,7 @@ Now that the workflow has been committed to a Git repo, it can be installed anyw
 .. code-block:: text
 
     cd ~/geneflow_work
-    geneflow install-workflow -g https://github.com/[USER]/hello-world-workflow-gf.git -c --make_apps ./test-workflow
+    geneflow install-workflow -g https://github.com/[USER]/hello-world-workflow-gf2.git -c --make-apps ./test-workflow
 
 This command installs the "Hello World!" one-step workflow, and its "Hello World!" app into the directory "test-workflow". Remember to replace the Git URL with the URL to which you committed the workflow.
 
@@ -249,7 +236,7 @@ Finally, test the workflow to validate its functionality:
 
 .. code-block:: text
 
-    geneflow run -d output_uri=output -d inputs.file=./test-workflow/data/test.txt ./test-workflow
+    geneflow run ./test-workflow -o output --in.file=./test-workflow/data/test.txt
 
 This command runs the workflow in the "test-workflow" directory using the test data and copies the output to the "output" directory.
 
