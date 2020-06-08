@@ -3,70 +3,60 @@
 Creating GeneFlow Apps
 ======================
 
-GeneFlow apps can be created and configured by editing the app's config.yaml file. An example config file can be found in the GeneFlow app template. 
+GeneFlow apps can be created and configured by editing the app's app.yaml file. An example config file can be found in the GeneFlow app template. 
 
 Clone the template to your new app directory with the following command (Note: This repository is currently only available in the CDC GitLab repository):
 
 .. code-block:: bash
 
-    git clone https://git.biotech.cdc.gov/geneflow-apps/app-template.git new-app
+    git clone https://gitlab.com/geneflow/apps/app-template-gf2.git new-app
 
 Replace the folder name, 'new-app', with the name of your app. The app template contains the following file and directory structure:
 
 .. code-block:: none
 
     ├── assets
-    │       └── bwa-mem-0.7.17-gf.sh
-    ├── build
-    │   └── README.rst
-    ├── docs
-    │   └── README.rst
+    │       └── bwa-mem-gf2.sh
     ├── test
     │   ├── data
     │   └── test.sh
     ├── agave-app-def.json.j2
-    ├── app.yaml.j2
-    ├── config.yaml
+    ├── app.yaml
     └── README.rst
 
-The 'assets' folder contains the app wrapper script, which is auto-generated based on the config.yaml file. The wrapper script is the app's execution entrypoint and contains logic to execute app binaries, scripts, or containers. Any binaries, scripts, or containers that need to be packaged with the app should be placed in the 'assets' folder. However, we recommend to containerize the app and publish it to a public repository or shared location.
+The 'assets' folder contains the app wrapper script, which is auto-generated based on the app.yaml file. The wrapper script is the app's execution entrypoint and contains logic to execute app binaries, scripts, or containers. Any binaries, scripts, or containers that need to be packaged with the app should be placed in the 'assets' folder. However, we recommend to containerize the app and publish it to a public repository or shared location.
 
-The optional 'build' folder contains scripts to build app binaries or containers upon app installation. Build scripts may also be placed in source control repositories and referenced by the config.yaml file. 
+The 'test' folder contains a 'data' folder with data used to test the app, and a shell script named 'test.sh'. The 'test.sh' script is auto-generated based on the app.yaml file. 
 
-The 'docs' folder contains detailed app documentation, including information about inputs and parameters. 
+The 'agave-app-def.json.j2' is also auto-generated based on the app.yaml file, and represents the Agave app definitions. 
 
-The 'test' folder contains a 'data' folder with data used to test the app, and a shell script named 'test.sh'. The 'test.sh' script is auto-generated based on the config.yaml file. 
+The 'README.rst' file should contain all documentation for the app and is automatically rendered in the source code repository. 
 
-The 'agave-app-def.json.j2' and 'app.yaml.j2' files are also auto-generated based on the config.yaml file, and represent the Agave and GeneFlow app definitions. 
-
-The 'README.rst' file should contain a brief description of your app and is automatically rendered in the source code repository. 
-
-Finally, 'config.yaml' is the primary app config file, which is described in detail below. Note that in this example app template, the wrapper script, 'bwa-mem-0.7.17-gf.sh' will be auto-generated with a different name based on your app configuration. Thus, the 'bwa-mem-0.7.17-gf.sh' should be deleted prior to committing your app to a source control repository. Similarly, the 'test/data' folder contains sample data specific to the bwa-mem app, and may also be deleted or replaced with custom data for your app. 
+Finally, 'app.yaml' is the primary app definition file, which is described in detail below. Note that in this example app template, the wrapper script, 'bwa-mem-gf2.sh' will be auto-generated with a different name based on your app configuration. Thus, the 'bwa-mem-gf2.sh' file should be deleted prior to committing your app to a source control repository. Similarly, the 'test/data' folder contains sample data specific to the bwa-mem app, and may also be deleted or replaced with custom data for your app. 
 
 GeneFlow App Config File
 ------------------------
 
-The GeneFlow app config file, named 'config.yaml' in the app repository, contains the following sections:
+The GeneFlow app definition file, named 'app.yaml' in the app repository, contains the following sections:
 
 1. Metadata
 2. Inputs and Parameters
 3. App Execution Methods
-4. App Assets
 
 In addition, the YAML file requires specific syntax to define execution blocks and conditional blocks. 
 
 Metadata
 ~~~~~~~~
 
-The app metadata section contains name, description, and source information. Metadata is used to populate the GeneFlow app definition file, app.yaml. 
+The app metadata section contains name, description, and source information.
 
 name:
-  Name of the GeneFlow app. We recommend to include version information for the app binary/container and a 'gf' suffix in the app name. For example, if the app is meant to wrap the 'mem' function in BWA version 0.7.17, the app name should be 'bwa-mem-0.7.17-gf'. 
+  Name of the GeneFlow app. We recommend to include a 'gf2' suffix in the app name. For example, if the app is meant to wrap the 'mem' function in BWA, the app name should be 'bwa-mem-gf2'. 
 
 description:
   A title or short description of the app.
 
-repo_uri:
+git:
   The full URL of the app's source repository. 
 
 version:
@@ -78,7 +68,7 @@ version:
 Inputs and Parameters
 ~~~~~~~~~~~~~~~~~~~~~
 
-Each app input and parameter item is defined in a subsection with the same name as the input/parameter. The 'output' parameter is required, and must be manually included in the config file. See the following section for details about the 'output' parameter. Each input or parameter subsection must have the following fields:
+Each app input and parameter item is defined in a subsection with the same name as the input/parameter. The 'output' parameter is required, and must be manually included in the app definition file. See the following section for details about the 'output' parameter. Each input or parameter subsection must have the following fields:
 
 label:
   A title or short description of the field.
@@ -134,7 +124,7 @@ The app 'output' parameter is associated with two additional variables for stori
         LOG_FULL="${OUTPUT_DIR}/_log"
         TMP_FULL="${OUTPUT_DIR}/_tmp"
 
-The LOG_FULL variable points to a directory that, once created, persists in the workflow intermediate and final output directory. LOG_FULL is optional, and must be manually created with a 'mkdir' command within the app config file preior to use. The '_log' directory must be accounted for when executing 'map' steps that process input folders. To exclude, a look-ahead regex can be used to filter the folder.  
+The LOG_FULL variable points to a directory that, once created, persists in the workflow intermediate and final output directory. LOG_FULL is optional, and must be manually created with a 'mkdir' command within the app config file prior to use. The '_log' directory must be accounted for when executing 'map' steps that process input folders. To exclude, a look-ahead regex can be used to filter the folder.  
 
 The TMP_FULL variable must also be manually created, but also must be manually deleted within the "clean-up" section of the app configuration. The TMP_FULL directory may or may not persist in the workflow intermediate and output directory, depending on the execution context. 
 
@@ -146,9 +136,6 @@ App Execution Methods
 Apps can be defined with multiple execution methods, with a single method being specified upon app execution. Execution methods define the medium of execution (i.e., singularity, docker, binary, script), as well as the location of the execution assets (i.e., included as part of the app package, in a shared location, from a repository, or pre-loaded/available in the environment PATH). 
 
 This section of the config file includes the following fields and sub-sections:
-
-default_exec_method:
-  This specifies the default execution method, which should be one of the items listed in the 'exec_methods' section below. Alternatively, a value of 'auto' means that the execution method is automatically detected by the wrapper script based on the 'if' conditions specified within each 'exec_methods' section.
 
 pre_exec:
   This section contains a list of execution commands for environment preparation to be executed before any method-specific execution commands. Each pre_exec item is an execution block, as defined in the "Execution Blocks" section. 
@@ -162,30 +149,6 @@ exec_methods:
 
 post_exec:
   This section contains a list of execution commands for environment cleanup to be executed after any method-specific execution commands. Each post_exec item is an execution block, as defined in the "Execution Blocks" section.
-
-App Assets
-~~~~~~~~~~
-
-App assets are additional scripts, binaries, or containers that need to be cloned from a git repo, copied from another location, and/or built during app installation. 
-
-The app assets section of the config file should contain the following items:
-
-default_asset:
-  The default asset to install if none is specified.
-
-assets:
-  The assets section can have multiple sub-sections, with no strict naming convention. Each section encompasses a single app asset and contains an array, with each array element defined with the following:
-
-    1. type: value can be "copy" or "build".
-    2. src: Source of assets. If type == copy, it must be relative to "prefix", which is passed to the install script. If type == build, it must be relative to the base app package directory and "build" must be the first folder name. src can include wild-cards, e.g., /folder/\*, but if wildcards are specified, zip must be disabled.
-
-    3. dst: Destination of assets. This is relative to the base app package directory, and "assets" must be the first folder name.
-    4. zip: if present, src files are tar.gz zipped prior to copying to destination. src must be a folder without wildcards if zipping. 
-    5. repo: if type == build, repo specifies the source repository to be cloned into the "build" directory.
-    6. tag: if repo is specified and type == build, tag is the branch or tag to be cloned.
-    7. folder: folder to which repo should be cloned. If "repo" is omitted, "folder" must be present. If so, "folder" refers to a folder inside the app "build" directory that contains build scripts. "folder" is useful when build scripts need to be included as part of the app package (instead of in a separate repo).
-
-"build" type assets, whether cloned from a git repo, or included as part of the app package must include a "Makefile" with a default build target.
 
 Execution Blocks
 ~~~~~~~~~~~~~~~~
@@ -233,15 +196,13 @@ stderr:
 
 All bash/shell commands in the "exec_methods" section has access to a number of pre-defined variables, including:
 
-    1. ${SINGULARITY}: set to "yes" or "no" depending on whether the "singularity" binary was detected.
-    2. ${DOCKER}: set to "yes" or "no" depending on whether the "docker" binary was detected.
-    3. ${SCRIPT_DIR}: directory of the wrapper script, which may not be the current directory. This depends on the execution environment.
-    4. ${VARNAME}: One for each input/parameter, set to value of the input/parameter.
-    5. ${VARNAME_FULL}: if input/parameter is a File, Directory, or Any, this is the full path of the input/parameter. 
-    6. ${VARNAME_DIR}: if input/parameter is a File, Directory, or Any, this is the parent directory of the input/parameter.
-    7. ${VARNAME_BASE}: if input/parameter is a File, Directory, or Any, this is the basename of the input/parameter.
-    8. ${LOG_FULL}: location to store log files.
-    9. ${TMP_FULL}: location to store temporary files.
+    1. ${SCRIPT_DIR}: directory of the wrapper script, which may not be the current directory. This depends on the execution environment.
+    2. ${VARNAME}: One for each input/parameter, set to value of the input/parameter.
+    3. ${VARNAME_FULL}: if input/parameter is a File, Directory, or Any, this is the full path of the input/parameter. 
+    4. ${VARNAME_DIR}: if input/parameter is a File, Directory, or Any, this is the parent directory of the input/parameter.
+    5. ${VARNAME_BASE}: if input/parameter is a File, Directory, or Any, this is the basename of the input/parameter.
+    6. ${LOG_FULL}: location to store log files.
+    7. ${TMP_FULL}: location to store temporary files.
     
 Any additional bash/shell variables defined in the "post" section of each input/parameter, or defined in the "pre_exec" section are also available.
 
@@ -335,8 +296,3 @@ Once the app 'config.yaml' file has been defined, the app can be generated. The 
 .. code-block:: bash
 
     geneflow make-app .
-
-
-
-
-

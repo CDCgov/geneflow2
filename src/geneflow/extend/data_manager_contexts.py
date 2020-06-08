@@ -156,6 +156,37 @@ def _copy_local_local(src_uri, dest_uri, local=None):
     return True
 
 
+def _move_local_local(src_uri, dest_uri, local=None):
+    """
+    Move local data with system shell.
+
+    Args:
+        src_uri: Source URI parsed into dict with URIParser.
+        dest_uri: Destination URI parsed into dict with URIParser.
+        local: local context options.
+
+    Returns:
+        On success: True.
+        On failure: False.
+
+    """
+    try:
+        shutil.move(
+            src_uri['path'],
+            dest_uri['path']
+        )
+    except OSError as err:
+        Log.an().error(
+            'cannot move from %s to %s [%s]',
+            src_uri['uri'],
+            dest_uri['uri'],
+            str(err)
+        )
+        return False
+
+    return True
+
+
 ### Agave data management functions and move/copy with Agave as source
 
 def _list_agave(uri, agave):

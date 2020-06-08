@@ -645,19 +645,19 @@ class AgaveStep(WorkflowStep):
         return True
 
 
-    def stage(self, **kwargs):
-        """
-        Override the StageableData class method and pass Agave parameters.
+    #def stage(self, **kwargs):
+    #    """
+    #    Override the StageableData class method and pass Agave parameters.
 
-        Args:
-            self: class instance.
+    #    Args:
+    #        self: class instance.
 
-        Returns:
-            On success: True.
-            On failure: False.
+    #    Returns:
+    #        On success: True.
+    #        On failure: False.
 
-        """
-        return super(AgaveStep, self).stage(
-            local={},
-            agave=self._agave
-        )
+    #    """
+    #    return super(AgaveStep, self).stage(
+    #        local={},
+    #        agave=self._agave
+    #    )
