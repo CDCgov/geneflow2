@@ -82,57 +82,52 @@ GeneFlow's public Apps and Workflows repository is located here: https://gitlab.
 
 .. code-block:: text
 
-    git clone https://gitlab.com/geneflow/apps/app-template.git hello-world-gf
+    git clone https://gitlab.com/geneflow/apps/app-template-gf2.git hello-world-gf2
 
-This command downloads the app template into the "hello-world-gf" directory. "hello-world-gf" also happens to be the name of the app you're creating in this tutorial.
+This command downloads the app template into the "hello-world-gf2" directory. "hello-world-gf2" also happens to be the name of the app you're creating in this tutorial.
 
 The GeneFlow app template contains a simple, but fully functional application. View the contents of the app template using the "tree" command:
 
 .. code-block:: text
 
-    cd hello-world-gf
+    cd hello-world-gf2
     tree .
 
-You should see the app template directory structure:
+You should see the app template directory structure similar to the following (it may have some extra files):
 
 .. code-block:: text
 
     .
     ├── assets
     │   └── README.rst
-    ├── build
-    │   └── README.rst
-    ├── config.yaml
-    ├── docs
-    │   └── README.rst
+    ├── app.yaml
     ├── README.rst
     └── test
         ├── data
-        │   └── file.txt
         └── README.rst
 
     5 directories, 7 files
 
-You'll need to update the "config.yaml" file to create the "Hello World" app. The "config.yaml" file is the main app configuration file, which defines the inputs, parameters, and execution commands of the app.
+You'll need to update the "app.yaml" file to create the "Hello World" app. The "app.yaml" file is the main app definition file, which defines the inputs, parameters, and execution commands of the app.
 
 It's good practice to also update the main "README.rst" file to document the app. 
 
-Configure the App
------------------
+Define the App
+--------------
 
-Configure the app by editing the "config.yaml" file. This file currently contains the configuration of a fully functional app, so you'll be simplifying some of the sections to create the "hello-world" app. Open the "config.yaml" file using your favorite text editor (vi and nano examples shown):
+Configure the app by editing the "app.yaml" file. This file currently contains the definition of a fully functional app, so you'll be simplifying some of the sections to create the "hello-world" app. Open the "app.yaml" file using your favorite text editor (vi and nano examples shown):
 
 .. code-block:: text
 
-    vi ./config.yaml
+    vi ./app.yaml
 
 or:
 
 .. code-block:: text
 
-    nano ./config.yaml
+    nano ./app.yaml
 
-The "config.yaml" file contains four main sections: Metadata, Inputs and Parameters, Execution Methods, and Assets. Edit each of these sections to create the "hello-world" app.
+The "app.yaml" file contains three main sections: Metadata, Inputs and Parameters, and Execution Methods. Edit each of these sections to create the "hello-world" app.
 
 Metadata
 ~~~~~~~~
@@ -140,27 +135,27 @@ Metadata
 The app metadata section contains the following basic information:
 
 name:
-  Name of the GeneFlow app. We recommend to include version information if your app is wrapping a specific binary, container, or script. The app name should also include a "gf" suffix. For example, if the app is meant to wrap the "mem" function in BWA version 0.7.17, the app name should be "bwa-mem-0.7.17-gf". For this example, use "hello-world-gf" without a version number because the app does not wrap a specific binary, container, or script. 
+  Name of the GeneFlow app. The app name should include a "gf2" suffix. For example, if the app is meant to wrap the "mem" function in BWA, the app name should be "bwa-mem-gf2". For this example, use "hello-world-gf2". 
 
 description:
   A title or short description of the app. For this example, use "Simple hello world GeneFlow app".
 
-repo_uri:
+git:
   The full URL of the app's source repository. This information is not available yet, so leave it blank.
 
 version:
   A string value that represents the app's version. For this example, use "0.1". We recommend to start with "0.1" for new apps and increment the number when changes are made to the app. 
 
-In the "config.yaml" file, modify the "Metadata" section so that it looks like the following:
+In the "app.yaml" file, modify the "Metadata" section so that it looks like the following:
 
 .. code-block:: yaml
 
     # name: standard GeneFlow app name
-    name: hello-world-gf
+    name: hello-world-gf2
     # description: short description for the app
     description: Simple hello world GeneFlow app
-    # repo_uri: link to the app's git repo
-    repo_uri:
+    # git: link to the app's git repo
+    git:
     # version: must be incremented every time this file, or any file in the app
     # project is modified
     version: '0.1'
@@ -196,13 +191,7 @@ Execution Methods
 
 The "Execution Methods" section of the app configuration file defines what the app actually does when executed. Apps can be defined with multiple execution methods. The specific method executed upon app invocation is either auto-detected or specified on the command line. Execution method names are customizable and the choice of a name should depend on the execution system. For example, if the app dependencies are installed globally in the execution system, use an execution method called "environment" (indicating that dependencies are available in the environment). If the app dependencies are containerized with Singularity, use an execution method called "singularity". For a more detailed explanation of the app "Execution Methods" section, see :ref:`App Execution Methods <app-execution-methods>`.
 
-The "Execution Methods" section of the "config.yaml" file contains four sub-sections: "default_exec_method", "pre_exec", "exec_methods", and "post_exec".
-
-The "default_exec_method" sub-section is a single string value. Set this to "auto", indicating that the execution method should be auto-detected. Alternatively, you can set it to one of the execution methods defined in the "exec_methods" sub-section, e.g., "environment" or "singularity". 
-
-.. code-block:: yaml
-
-    default_exec_method: auto
+The "Execution Methods" section of the "app.yaml" file contains three sub-sections: "pre_exec", "exec_methods", and "post_exec".
 
 The "pre_exec" sub-section defines any commands that should be executed prior to commands in the main "exec_methods" sub-section. These usually include commands for directory or file preparation that are common for all execution methods, e.g., creating an output directory. For this tutorial, no "pre_exec" commands are required, so leave it blank:
 
@@ -230,18 +219,6 @@ The "post_exec" sub-section defines any commands that should be executed after c
 
     post_exec:
 
-Assets
-~~~~~~
-
-The "assets" section of the "config.yaml" file specifies additional scripts, binaries, or containers that need to be cloned from a git repo, copied from another location, and/or built during app installation. In this example, the app is fully contained within the "Execution Methods" section, so no additional assets are required. Specify this in the assets section as follows:
-
-.. code-block:: yaml
-
-    default_asset: none
-
-    assets:
-      none: []
-
 "Make" the App
 --------------
 
@@ -251,7 +228,7 @@ First, make sure you're still in the app directory:
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-gf
+    cd ~/geneflow_work/hello-world-gf2
 
 Then run the GeneFlow "make-app" command:
 
@@ -259,20 +236,19 @@ Then run the GeneFlow "make-app" command:
 
     geneflow make-app .
 
-GeneFlow will then generate four files:
+GeneFlow will then generate three files:
 
 .. code-block:: text
 
-    2019-05-31 00:21:43 INFO [app_installer.py:267:make_def()] compiling /home/[user]/geneflow_work/hello-world-gf/app.yaml.j2
     2019-05-31 00:21:43 INFO [app_installer.py:293:make_agave()] compiling /home/[user]/geneflow_work/hello-world-gf/agave-app-def.json.j2
-    2019-05-31 00:21:43 INFO [app_installer.py:325:make_wrapper()] compiling /home/[user]/geneflow_work/hello-world-gf/assets/hello-world-gf.sh
+    2019-05-31 00:21:43 INFO [app_installer.py:325:make_wrapper()] compiling /home/[user]/geneflow_work/hello-world-gf/assets/hello-world-gf2.sh
     2019-05-31 00:21:43 INFO [app_installer.py:357:make_test()] compiling /home/[user]/geneflow_work/hello-world-gf/test/test.sh
 
 Finally, make the app wrapper script executable:
 
 .. code-block:: text
 
-    chmod +x ./assets/hello-world-gf.sh
+    chmod +x ./assets/hello-world-gf2.sh
 
 Test the App
 ------------
@@ -318,7 +294,7 @@ It is best practice to update the app README file to include the app name, a sho
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-gf
+    cd ~/geneflow_work/hello-world-gf2
     vi ./README.rst
 
 Modify the file so it looks like the following:
@@ -351,7 +327,7 @@ Finally, commit the app to a git repo so that it can be used in a GeneFlow workf
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-gf
+    cd ~/geneflow_work/hello-world-gf2
     rm ./test/output.txt
 
 Commit all changes to the local git repo and tag the app version: 
@@ -367,11 +343,11 @@ Push to the remote repo using the following commands, depending on where your re
 GitHub
 ~~~~~~
 
-If your repository is in GitHub, you must first create the repo on the GitHub.com site. Once created, it will likely be located at a URL similar to ``https://github.com/[user]/hello-world-gf.git``, where ``[user]`` should be replaced with your GitHub username or group. Push your code to GitHub using the following commands:
+If your repository is in GitHub, you must first create the repo on the GitHub.com site. Once created, it will likely be located at a URL similar to ``https://github.com/[user]/hello-world-gf2.git``, where ``[user]`` should be replaced with your GitHub username or group. Push your code to GitHub using the following commands:
 
 .. code-block:: text
 
-    git remote set-url origin https://github.com/[user]/hello-world-gf.git
+    git remote set-url origin https://github.com/[user]/hello-world-gf2.git
     git push --tags origin master
 
 Be sure to replace ``[user]`` with your GitHub username or group. 
@@ -379,11 +355,11 @@ Be sure to replace ``[user]`` with your GitHub username or group.
 GitLab
 ~~~~~~
 
-If your repository is in GitLab, you don't need to create the repo on the GitLab.com site. You can skip directly to pushing your code to the git URL, which will be similar to ``https://gitlab.com/[user]/hello-world-gf.git``, where ``[user]`` should be replaced with your GitLab username or group:
+If your repository is in GitLab, you don't need to create the repo on the GitLab.com site. You can skip directly to pushing your code to the git URL, which will be similar to ``https://gitlab.com/[user]/hello-world-gf2.git``, where ``[user]`` should be replaced with your GitLab username or group:
 
 .. code-block:: text
 
-    git remote set-url origin https://gitlab.com/[user]/hello-world-gf.git
+    git remote set-url origin https://gitlab.com/[user]/hello-world-gf2.git
     git push --tags origin master
 
 Be sure to replace ``[user]`` with your GitLab username or group. 
@@ -391,11 +367,11 @@ Be sure to replace ``[user]`` with your GitLab username or group.
 Organization GitLab
 ~~~~~~~~~~~~~~~~~~~
 
-If you have a company or organization GitLab server, your git repo hostname will likely be different. For example, it could be hosted at ``https://git.biotech.cdc.gov/[user]/hello-world-gf.git``, where ``[user]`` should be replaced with your username or group:
+If you have a company or organization GitLab server, your git repo hostname will likely be different. For example, it could be hosted at ``https://git.biotech.cdc.gov/[user]/hello-world-gf2.git``, where ``[user]`` should be replaced with your username or group:
 
 .. code-block:: text
 
-    git remote set-url origin https://git.biotech.cdc.gov/[user]/hello-world-gf.git
+    git remote set-url origin https://git.biotech.cdc.gov/[user]/hello-world-gf2.git
     git push --tags origin master
 
 Be sure to replace ``[user]`` with your organization's GitLab username or group. 
