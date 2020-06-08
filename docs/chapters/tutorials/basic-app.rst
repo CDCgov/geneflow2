@@ -155,7 +155,7 @@ In the "app.yaml" file, modify the "Metadata" section so that it looks like the 
     # description: short description for the app
     description: Simple hello world GeneFlow app
     # git: link to the app's git repo
-    repo_uri:
+    git:
     # version: must be incremented every time this file, or any file in the app
     # project is modified
     version: '0.1'
