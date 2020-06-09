@@ -60,6 +60,8 @@
                 [ ! -e "{{ if_item.not_exist }}" ]
             {%- elif if_item.in_path -%}
                 command -v {{ if_item.in_path }} >/dev/null 2>&1
+            {%- elif if_item.not_in_path -%}
+                ! command -v {{ if_item.in_path }} >/dev/null 2>&1
             {%- elif if_item.str_contain -%}
                 contains "{{ if_item.str_contain[0] }}" "{{ if_item.str_contain[1] }}"
             {%- elif if_item.not_str_contain -%}
@@ -179,7 +181,7 @@
 #### Helper Functions ####
 ###############################################################################
 
-## MODIFY >>> *****************************************************************
+## ****************************************************************************
 ## Usage description should match command line arguments defined below
 usage () {
     echo "Usage: $(basename "$0")"
@@ -193,9 +195,10 @@ usage () {
         {%- for exec_method in exec_methods -%}
             {{- exec_method.name -}},{{- ' ' -}}
         {%- endfor %}auto)"
+    echo "  --exec_init => Execution initialization command(s)"
     echo "  --help => Display this help message"
 }
-## ***************************************************************** <<< MODIFY
+## ****************************************************************************
 
 # report error code for command
 safeRunCommand() {
@@ -264,10 +267,10 @@ if [ $? -ne 4 ]; then
     exit 1
 fi
 
-## MODIFY >>> *****************************************************************
+## ****************************************************************************
 ## Command line options should match usage description
 OPTIONS=
-LONGOPTIONS=help,exec_method:,
+LONGOPTIONS=help,exec_method:,exec_init:,
 {%- for key, value in inputs.items() -%}
     {{- key -}}:,
 {%- endfor -%}
@@ -275,7 +278,7 @@ LONGOPTIONS=help,exec_method:,
     {{- key -}}:,
 {%- endfor %}
 
-## ***************************************************************** <<< MODIFY
+## ****************************************************************************
 
 # -temporarily store output to be able to check for errors
 # -e.g. use "--options" parameter by name to activate quoting/enhanced mode
@@ -293,7 +296,7 @@ fi
 # read getopt's output this way to handle the quoting right:
 eval set -- "$PARSED"
 
-## MODIFY >>> *****************************************************************
+## ****************************************************************************
 ## Set any defaults for command line options
 {% for key, value in inputs.items() %}
 {% if not value.required %}
@@ -310,9 +313,10 @@ eval set -- "$PARSED"
 {% endif %}
 {% endfor %}
 EXEC_METHOD="auto"
-## ***************************************************************** <<< MODIFY
+EXEC_INIT=""
+## ****************************************************************************
 
-## MODIFY >>> *****************************************************************
+## ****************************************************************************
 ## Handle each command line option. Lower-case variables, e.g., ${file}, only
 ## exist if they are set as environment variables before script execution.
 ## Environment variables are used by Agave. If the environment variable is not
@@ -352,6 +356,14 @@ while true; do
             fi
             shift 2
             ;;
+        --exec_init)
+            if [ -z "${exec_init}" ]; then
+                EXEC_INIT=$2
+            else
+                EXEC_INIT=${exec_init}
+            fi
+            shift 2
+            ;;
         --)
             shift
             break
@@ -363,9 +375,9 @@ while true; do
             ;;
     esac
 done
-## ***************************************************************** <<< MODIFY
+## ****************************************************************************
 
-## MODIFY >>> *****************************************************************
+## ****************************************************************************
 ## Log any variables passed as inputs
 {% for key, value in inputs.items() %}
 echo "{{ key|capitalize }}: ${{ '{' }}{{ key|upper }}{{ '}' }}"
@@ -374,7 +386,8 @@ echo "{{ key|capitalize }}: ${{ '{' }}{{ key|upper }}{{ '}' }}"
 echo "{{ key|capitalize }}: ${{ '{' }}{{ key|upper }}{{ '}' }}"
 {% endfor %}
 echo "Execution Method: ${EXEC_METHOD}"
-## ***************************************************************** <<< MODIFY
+echo "Execution Initialization: ${EXEC_INIT}"
+## ****************************************************************************
 
 
 
@@ -382,7 +395,7 @@ echo "Execution Method: ${EXEC_METHOD}"
 #### Validate and Set Variables ####
 ###############################################################################
 
-## MODIFY >>> *****************************************************************
+## ****************************************************************************
 ## Add app-specific logic for handling and parsing inputs and parameters
 {% for key, value in inputs.items() %}
 
@@ -494,28 +507,24 @@ else
 fi
 
 {% endfor %}
-
-## ***************************************************************** <<< MODIFY
+## ****************************************************************************
 
 ## EXEC_METHOD: execution method
 ## Suggested possible options:
 ##   auto: automatically determine execution method
-##   package: binaries packaged with the app
-##   cdc-shared-package: binaries centrally located at the CDC
 ##   singularity: singularity image packaged with the app
-##   cdc-shared-singularity: singularity image centrally located at the CDC
 ##   docker: docker containers from docker-hub
 ##   environment: binaries available in environment path
-##   module: environment modules
 
-## MODIFY >>> *****************************************************************
+## ****************************************************************************
 ## List supported execution methods for this app (space delimited)
 exec_methods="
     {%- for exec_method in exec_methods -%}
         {{- exec_method.name -}}{{ ' ' }}
     {%- endfor -%}auto"
-## ***************************************************************** <<< MODIFY
+## ****************************************************************************
 
+## ****************************************************************************
 # make sure the specified execution method is included in list
 if ! contains " ${exec_methods} " " ${EXEC_METHOD} "; then
     echo "Invalid execution method: ${EXEC_METHOD}"
@@ -523,6 +532,7 @@ if ! contains " ${exec_methods} " " ${EXEC_METHOD} "; then
     usage
     exit 1
 fi
+## ****************************************************************************
 
 
 
@@ -533,7 +543,7 @@ fi
 # assign to new variable in order to auto-detect after Agave
 # substitution of EXEC_METHOD
 AUTO_EXEC=${EXEC_METHOD}
-## MODIFY >>> *****************************************************************
+## ****************************************************************************
 ## Add app-specific paths to detect the execution method.
 if [ "${EXEC_METHOD}" = "auto" ]; then
     # detect execution method
@@ -559,17 +569,30 @@ fi
 
 
 ###############################################################################
+#### App Execution Initialization ####
+###############################################################################
+
+## ****************************************************************************
+## Execute any "init" commands passed to the GeneFlow CLI
+CMD="${EXEC_INIT}"
+echo "CMD=${CMD}"
+safeRunCommand "${CMD}"
+## ****************************************************************************
+
+
+
+###############################################################################
 #### App Execution Preparation, Common to all Exec Methods ####
 ###############################################################################
 
-## MODIFY >>> *****************************************************************
+## ****************************************************************************
 ## Add logic to prepare environment for execution
 {% if pre_exec %}
 {% for exec_item in pre_exec %}
 {{ exec(exec_item) }}
 {% endfor %}
 {% endif %}
-## ***************************************************************** <<< MODIFY
+## ****************************************************************************
 
 
 
@@ -577,7 +600,7 @@ fi
 #### App Execution, Specific to each Exec Method ####
 ###############################################################################
 
-## MODIFY >>> *****************************************************************
+## ****************************************************************************
 ## Add logic to execute app
 ## There should be one case statement for each item in $exec_methods
 case "${AUTO_EXEC}" in
@@ -589,7 +612,7 @@ case "${AUTO_EXEC}" in
         ;;
     {% endfor %}
 esac
-## ***************************************************************** <<< MODIFY
+## ****************************************************************************
 
 
 
@@ -597,13 +620,13 @@ esac
 #### Cleanup, Common to All Exec Methods ####
 ###############################################################################
 
-## MODIFY >>> *****************************************************************
+## ****************************************************************************
 ## Add logic to cleanup execution artifacts, if necessary
 {% if post_exec %}
 {% for exec_item in post_exec %}
 {{ exec(exec_item) }}
 {% endfor %}
 {% endif %}
-## ***************************************************************** <<< MODIFY
+## ****************************************************************************
 
 

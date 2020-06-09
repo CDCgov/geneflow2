@@ -12,6 +12,7 @@
 usage () {
     echo "Usage: $(basename "$0")"
     echo "  --exec_method => Execution method ({% for exec_method in exec_methods -%}{{ exec_method.name }}, {% endfor %}auto)"
+    echo "  --exec_init => Execution initialization command(s)"
     echo "  --help => Display this help message"
 }
 ## ***************************************************************** <<< MODIFY
@@ -73,6 +74,7 @@ eval set -- "$PARSED"
 ## MODIFY >>> *****************************************************************
 ## Set any defaults for command line options
 EXEC_METHOD=auto
+EXEC_INIT=""
 ## ***************************************************************** <<< MODIFY
 
 ## MODIFY >>> *****************************************************************
@@ -85,6 +87,10 @@ while true; do
             ;;
         --exec_method)
             EXEC_METHOD=$2
+            shift 2
+            ;;
+        --exec_init)
+            EXEC_INIT=$2
             shift 2
             ;;
         --)
@@ -118,6 +124,7 @@ CMD="${SCRIPT_DIR}/../assets/{{ name }}.sh"
     {% endif %}
     {% endfor %}
     CMD="${CMD} --exec_method=\"${EXEC_METHOD}\""
+    CMD="${CMD} --exec_init=\"${EXEC_INIT}\""
 echo "CMD=${CMD}"
 safeRunCommand "${CMD}"
 
