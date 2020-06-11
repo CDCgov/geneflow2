@@ -255,11 +255,16 @@ class AgaveStep(WorkflowStep):
             if param_key in map_item['template']:
                 parameters[param_key] = map_item['template'][param_key]
             else:
-                parameters[param_key] \
-                    = self._app['parameters'][param_key]['default']
+                if self._app['parameters'][param_key]['default'] not in [None, '']:
+                    parameters[param_key] \
+                        = self._app['parameters'][param_key]['default']
 
         # add execution method as parameter
         parameters['exec_method'] = self._step['execution']['method']
+
+        # add execution init commands if 'init' param given
+        if 'init' in self._step['execution']['parameters']:
+            parameters['exec_init'] = self._step['execution']['parameters']['init']
 
         # construct agave app template
         name = 'gf-{}-{}-{}'.format(
@@ -643,21 +648,3 @@ class AgaveStep(WorkflowStep):
         self._update_status_db('FINISHED', '')
 
         return True
-
-
-    #def stage(self, **kwargs):
-    #    """
-    #    Override the StageableData class method and pass Agave parameters.
-
-    #    Args:
-    #        self: class instance.
-
-    #    Returns:
-    #        On success: True.
-    #        On failure: False.
-
-    #    """
-    #    return super(AgaveStep, self).stage(
-    #        local={},
-    #        agave=self._agave
-    #    )
