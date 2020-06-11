@@ -803,7 +803,6 @@ class Workflow:
                 # stage outputs (non-final)
                 Log.some().debug('[%s]: staging output', node_name)
                 if not node['node'].stage(
-                        move_final=True,
                         **{
                             context: self._workflow_context[context]\
                                 .get_context_options()\
