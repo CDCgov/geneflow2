@@ -90,7 +90,7 @@ class StageableData:
         return True
 
 
-    def stage(self, **kwargs):
+    def stage(self, move_final=False, **kwargs):
         """
         Copy data to all contexts except 'final' from source URI.
 
@@ -160,7 +160,7 @@ class StageableData:
                     pass
 
                 Log.some().debug(
-                    'staging data: {}->{} to {}->{}'.format(
+                    'staging final data: {}->{} to {}->{}'.format(
                         self._source_context,
                         self._parsed_data_uris[self._source_context]['chopped_uri'],
                         context,
