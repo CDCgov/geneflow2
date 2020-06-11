@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 2020/06/10 - v2.0.0-alpha.4: enhancement and bug fix release
+## 2020/06/12 - v2.0.0-alpha.4: enhancement and bug fix release
 
 1. Major enhancement: add "Gooey" graphical interface option for running workflows.
 

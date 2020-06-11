@@ -160,7 +160,7 @@ class StageableData:
                     pass
 
                 Log.some().debug(
-                    'staging data: {}->{} to {}->{}'.format(
+                    'staging final data: {}->{} to {}->{}'.format(
                         self._source_context,
                         self._parsed_data_uris[self._source_context]['chopped_uri'],
                         context,
