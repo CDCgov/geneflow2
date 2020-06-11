@@ -737,6 +737,7 @@ class Workflow:
         for node_name in self._dag.get_topological_sort():
             node = self._dag.graph().nodes[node_name]
             if node['type'] == 'input':
+
                 Log.some().debug('[%s]: staging input', node_name)
                 if not node['node'].stage(
                         move_final=False,
@@ -799,10 +800,9 @@ class Workflow:
                     Log.an().error(msg)
                     return self._fatal(msg)
 
-                # stage outputs
+                # stage outputs (non-final)
                 Log.some().debug('[%s]: staging output', node_name)
                 if not node['node'].stage(
-                        move_final=True,
                         **{
                             context: self._workflow_context[context]\
                                 .get_context_options()\
@@ -813,7 +813,26 @@ class Workflow:
                     Log.an().error(msg)
                     return self._fatal(msg)
 
+
+        # stage final outputs
+        for node_name in self._dag.get_topological_sort():
+            node = self._dag.graph().nodes[node_name]
+            if node['type'] == 'step':
+
+                Log.some().debug('[%s]: staging final output', node_name)
+                if not node['node'].stage_final(
+                        **{
+                            context: self._workflow_context[context]\
+                                .get_context_options()\
+                            for context in self._workflow_context
+                        }
+                ):
+                    msg = 'staging final output failed for step {}'.format(node_name)
+                    Log.an().error(msg)
+                    return self._fatal(msg)
+
                 Log.some().info('[%s]: complete', node_name)
+
 
         self._update_status_db('FINISHED', '')
 
