@@ -252,7 +252,7 @@ class WorkflowInstaller:
                     self._workflow['apps'][app]['version']
                 )
 
-                repo_path = apps_path / slugify(app)
+                repo_path = apps_path / slugify(app, regex_pattern=r'[^-a-z0-9_]+')
 
                 # create AppInstaller instance
                 app_installer = AppInstaller(

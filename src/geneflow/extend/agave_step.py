@@ -269,8 +269,8 @@ class AgaveStep(WorkflowStep):
         # construct agave app template
         name = 'gf-{}-{}-{}'.format(
             str(map_item['attempt']),
-            slugify(self._step['name']),
-            slugify(map_item['template']['output'])
+            slugify(self._step['name'], regex_pattern=r'[^-a-z0-9_]+'),
+            slugify(map_item['template']['output'], regex_pattern=r'[^-a-z0-9_]+')
         )
         name = name[:62]+'..' if len(name) > 64 else name
         archive_path = '{}/{}'.format(

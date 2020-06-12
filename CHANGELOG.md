@@ -19,6 +19,8 @@
 
 8. Fix bug: Empty _log directory should not cause workflow to fail.
 
+9. Allow underscores in slugified step and output folder names.
+
 
 ## 2020/05/14 - v2.0.0-alpha.3: enhancement and bug fix release
 

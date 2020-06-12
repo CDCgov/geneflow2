@@ -282,8 +282,8 @@ class GridengineStep(WorkflowStep):
         # construct job name
         name = 'gf-{}-{}-{}'.format(
             map_item['attempt'],
-            slugify(self._step['name']),
-            slugify(map_item['template']['output'])
+            slugify(self._step['name'], regex_pattern=r'[^-a-z0-9_]+'),
+            slugify(map_item['template']['output'], regex_pattern=r'[^-a-z0-9_]+')
         )
 
         # construct paths for logging stdout and stderr
