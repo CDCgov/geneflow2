@@ -201,14 +201,14 @@ class AppInstaller:
                     app_yaml.write(
                         '\n    agave_app_id: {}-{}-{}{}'.format(
                             agave['apps_prefix'],
-                            slugify(self._app['name']),
+                            slugify(self._app['name'], regex_pattern=r'[^-a-z0-9_]+'),
                             self._app['agave_version'],
                             agave['revision']
                         )
                     )
                 app_yaml.write('\n  local:')
                 app_yaml.write(
-                    '\n    script: {}.sh'.format(slugify(self._app['name']))
+                    '\n    script: {}.sh'.format(slugify(self._app['name'], regex_pattern=r'[^-a-z0-9_]+'))
                 )
         except IOError as err:
             Log.an().error('cannot update GeneFlow app definition: %s', err)
@@ -235,7 +235,7 @@ class AppInstaller:
                 None,
                 'agave-app-def.json.j2.j2',
                 str(self._path / 'agave-app-def.json.j2'),
-                slugify_name=slugify(self._app['name']),
+                slugify_name=slugify(self._app['name'], regex_pattern=r'[^-a-z0-9_]+'),
                 **self._app
         ):
             Log.an().error('cannot compile GeneFlow Agave app definition template')
@@ -260,7 +260,7 @@ class AppInstaller:
         asset_path = Path(self._path / 'assets')
         asset_path.mkdir(exist_ok=True)
 
-        script_path = str(asset_path / '{}.sh'.format(slugify(self._app['name'])))
+        script_path = str(asset_path / '{}.sh'.format(slugify(self._app['name'], regex_pattern=r'[^-a-z0-9_]+')))
         Log.some().info('compiling %s', script_path)
 
         # compile jinja2 template
@@ -369,7 +369,7 @@ class AppInstaller:
             'agave://{}/{}/{}-{}'.format(
                 agave_params['agave']['deploymentSystem'],
                 agave_params['agave']['appsDir'],
-                slugify(self._app['name']),
+                slugify(self._app['name'], regex_pattern=r'[^-a-z0-9_]+'),
                 self._app['version']
             )
         )

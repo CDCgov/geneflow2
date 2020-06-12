@@ -468,7 +468,7 @@ class Workflow:
 
         """
         # name of the job directory
-        job_dir = slugify(self._job['name'])
+        job_dir = slugify(self._job['name'], regex_pattern=r'[^-a-z0-9_]+')
         job_dir_hash = '{}-{}'.format(job_dir, self._job['job_id'][:8])
 
         # validate work URI for each exec context

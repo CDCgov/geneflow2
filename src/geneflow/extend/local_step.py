@@ -212,7 +212,7 @@ class LocalStep(WorkflowStep):
             if param_key in map_item['template']:
                 parameters[param_key] = map_item['template'][param_key]
             else:
-                if self._app['parameters'][paramm_key]['default'] not in [None, '']:
+                if self._app['parameters'][param_key]['default'] not in [None, '']:
                     parameters[param_key] \
                         = self._app['parameters'][param_key]['default']
 
@@ -248,8 +248,8 @@ class LocalStep(WorkflowStep):
         log_path = '{}/_log/gf-{}-{}-{}'.format(
             self._parsed_data_uris[self._source_context]['chopped_path'],
             map_item['attempt'],
-            slugify(self._step['name']),
-            slugify(map_item['template']['output'])
+            slugify(self._step['name'], regex_pattern=r'[^-a-z0-9_]+'),
+            slugify(map_item['template']['output'], regex_pattern=r'[^-a-z0-9_]+')
         )
         cmd += ' > "{}.out" 2> "{}.err"'.format(log_path, log_path)
 

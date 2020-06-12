@@ -350,7 +350,7 @@ class WorkflowDAG:
                         # switch context of input URI
                         new_base_uri = '{}/_input-{}'.format(
                             self._parsed_job_work_uri[context]['chopped_uri'],
-                            slugify(node['name'])
+                            slugify(node['name'], regex_pattern=r'[^-a-z0-9_]+')
                         )
 
                         # create new base URI
@@ -403,7 +403,7 @@ class WorkflowDAG:
                     self._context_uris['steps'][context][node['name']]\
                         = '{}/{}'.format(
                             self._parsed_job_work_uri[context]['chopped_uri'],
-                            slugify(node['name'])
+                            slugify(node['name'], regex_pattern=r'[^-a-z0-9_]+')
                         )
                     self._parsed_context_uris['steps'][context][node['name']]\
                         = URIParser.parse(
@@ -419,7 +419,7 @@ class WorkflowDAG:
                 self._context_uris['steps']['final'][node['name']]\
                     = '{}/{}'.format(
                         self._parsed_job_output_uri['chopped_uri'],
-                        slugify(node['name'])
+                        slugify(node['name'], regex_pattern=r'[^-a-z0-9_]+')
                     )
                 self._parsed_context_uris['steps']['final'][node['name']]\
                     = URIParser.parse(
