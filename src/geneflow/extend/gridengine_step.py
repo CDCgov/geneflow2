@@ -270,7 +270,7 @@ class GridengineStep(WorkflowStep):
 
         # specify execution init commands if 'init' param given
         if 'init' in self._step['execution']['parameters']:
-            args.append(' --exec_init="{}"'.format(self._step['execution']['parameters']['init']))
+            args.append('--exec_init={}'.format(self._step['execution']['parameters']['init']))
 
         Log.a().debug(
             '[step.%s]: command: %s -> %s',
