@@ -181,7 +181,7 @@ GeneFlow can be installed and run in any general Linux environment. Use the foll
 
     .. code-block:: bash
 
-        git clone https://github.com/CDCgov/geneflow
+        git clone https://github.com/CDCgov/geneflow2
         pip3 install ./geneflow
 
 Prepare Agave in a General Linux Environment

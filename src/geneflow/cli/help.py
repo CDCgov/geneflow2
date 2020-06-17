@@ -91,11 +91,23 @@ def help_func(args, other_args, subparser=None):
     # get first workflow dict
     workflow_dict = next(iter(gf_def.workflows().values()))
     print()
-    print('GeneFlow: {}'.format(workflow_dict['name']))
+    print('{}: {}'.format(workflow_dict['name'], workflow_dict['description']))
     print()
-    print('{}'.format(workflow_dict['description']))
+    print('Execution Command:')
+    print('\tgf [--log-level LOG_LEVEL] [--log-file LOG_FILE] run WORKFLOW_PATH')
+    print('\t\t-o OUTPUT [-n NAME] [INPUTS] [PARAMETERS] [-w WORK_DIR [WORK_DIR ...]]')
+    print('\t\t[--ec CONTEXT [CONTEXT ...]] [--em METHOD [METHOD ...]] [--ep PARAM [PARAM ...]]')
     print()
-    print('Inputs:')
+    print('\tWORKFLOW_PATH: Path to directory that contains workflow definition')
+    print()
+    print('Job Configuration:')
+    print('\t-o,--output: Output directory')
+    print('\t-n,--name: Job name, a directory with this name will be created in the output directory')
+    print('\t\tdefault: geneflow-job')
+    print('\t-w,--work: Work directories, for temporary or intermediate data')
+    print('\t\tdefault: ~/.geneflow/work')
+    print()
+    print('Inputs: Workflow-Specific Files or Folders')
     for input_key in workflow_dict['inputs']:
         print(
             '\t--in.{}: {}: {}'.format(
@@ -111,7 +123,7 @@ def help_func(args, other_args, subparser=None):
             )
         )
     print()
-    print('Parameters:')
+    print('Parameters: Workflow-Specific Values')
     for param_key in workflow_dict['parameters']:
         print(
             '\t--param.{}: {}: {}'.format(
@@ -126,5 +138,18 @@ def help_func(args, other_args, subparser=None):
                 workflow_dict['parameters'][param_key]['default']
             )
         )
+    print()
+    print('Execution Configuration:')
+    print('\t--ec,--exec-context: Execution contexts, e.g., local, agave, gridengine.')
+    print('\t\tThese can be specified for all workflow steps with "default:[CONTEXT]"')
+    print('\t\tor for specific steps with "step-name:[CONTEXT]".')
+    print('\t--em,--exec-method: Exeuction methods, e.g., singularity, docker, environment.')
+    print('\t\tThese can be specified for all workflow steps with "default:[METHOD]"')
+    print('\t\tor for specific steps with "step-name:[METHOD]". By default each app associated')
+    print('\t\twith a workflow step tries automatically detect the execution method.')
+    print('\t--ep,--exec-param: Execution parameters, e.g., slots, mem, or other.')
+    print('\t\tThese can be specified for all workflow steps with "default.slots:[VALUE]"')
+    print('\t\tor for specific steps with "step-name.slots:[VALUE]". Execution parameters')
+    print('\t\tdepend on the execution context.')
 
     return True

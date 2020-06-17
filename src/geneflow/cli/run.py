@@ -2,10 +2,15 @@
 
 
 import os
+import sys
 import argparse
 from pathlib import Path
 from multiprocessing import Pool
 from functools import partial
+
+try:
+    from gooey import Gooey, GooeyParser
+except ImportError: pass
 
 import geneflow.cli.common
 from geneflow.config import Config
@@ -23,6 +28,12 @@ def init_subparser(subparsers):
         'workflow_path',
         type=str,
         help='GeneFlow workflow definition or package directory'
+    )
+    parser.add_argument(
+        '-g','--gui',
+        action='store_true',
+        default=False,
+        help='Use a GUI argument parser'
     )
     parser.set_defaults(func=run)
 
@@ -110,96 +121,6 @@ def apply_job_modifiers(jobs_dict, job_mods):
             set_dict_key_list(job, keys, val)
 
 
-def parse_dynamic_args(other_args, workflow_dict):
-    """
-    Parse dynamic args based on workflow dictionary as well as
-    some static args.
-
-    Args:
-        other_args: List of remaining args from initial parse of
-            workflow path.
-        workflow_dict: Workflow dictionary
-
-    Returns:
-        On success: List of parsed arguments.
-        On failure: False.
-
-    """
-
-    # parse dynamic args. these are determined from workflow definition
-    dynamic_parser = argparse.ArgumentParser()
-
-    dynamic_parser.add_argument(
-        '-j', '--job',
-        type=str,
-        default=None,
-        dest='job_path',
-        help='geneflow definition yaml for job(s)'
-    )
-    dynamic_parser.add_argument(
-        '-o', '--output',
-        type=str,
-        required=True,
-        help='output folder'
-    )
-    dynamic_parser.add_argument(
-        '-n', '--name',
-        type=str,
-        default='geneflow-job',
-        help='name of job'
-    )
-    dynamic_parser.add_argument(
-        '-w', '--work',
-        type=str,
-        action='append',
-        default=[],
-        help='work directory'
-    )
-    dynamic_parser.add_argument(
-        '--exec-context', '--ec',
-        type=str,
-        dest='exec_context',
-        action='append',
-        default=[],
-        help='execution contexts'
-    )
-    dynamic_parser.add_argument(
-        '--exec-method', '--em',
-        type=str,
-        dest='exec_method',
-        action='append',
-        default=[],
-        help='execution methods'
-    )
-    dynamic_parser.add_argument(
-        '--exec-param', '--ep',
-        type=str,
-        dest='exec_param',
-        action='append',
-        default=[],
-        help='execution parameters'
-    )
-
-    for input_key in workflow_dict['inputs']:
-        dynamic_parser.add_argument(
-            '--in.{}'.format(input_key),
-            dest='inputs.{}'.format(input_key),
-            required=False,
-            default=workflow_dict['inputs'][input_key]['default']
-        )
-    for param_key in workflow_dict['parameters']:
-        dynamic_parser.add_argument(
-            '--param.{}'.format(param_key),
-            dest='parameters.{}'.format(param_key),
-            required=False,
-            default=workflow_dict['parameters'][param_key]['default']
-        )
-
-    dynamic_args = dynamic_parser.parse_args(other_args)
-
-    return dynamic_args
-
-
 def run(args, other_args, subparser):
     """
     Run GeneFlow workflow engine.
@@ -267,8 +188,211 @@ def run(args, other_args, subparser):
         )
         return False
 
+    ### define arg parsing methods
+    def parse_dynamic_args(workflow_dict):
+        """
+        Parse dynamic args based on workflow dictionary as well as
+        some static args.
+
+        Args:
+            other_args: List of remaining args from initial parse of
+                workflow path.
+            workflow_dict: Workflow dictionary
+
+        Returns:
+            On success: List of parsed arguments.
+            On failure: False.
+
+        """
+        # parse dynamic args. these are determined from workflow definition
+        dynamic_parser = argparse.ArgumentParser()
+
+        dynamic_parser.add_argument(
+            '-j', '--job',
+            type=str,
+            default=None,
+            dest='job_path',
+            help='Job Definition(s)'
+        )
+        for input_key in workflow_dict['inputs']:
+            dynamic_parser.add_argument(
+                '--in.{}'.format(input_key),
+                dest='inputs.{}'.format(input_key),
+                required=False,
+                default=workflow_dict['inputs'][input_key]['default'],
+                help=workflow_dict['inputs'][input_key]['label']
+            )
+        for param_key in workflow_dict['parameters']:
+            dynamic_parser.add_argument(
+                '--param.{}'.format(param_key),
+                dest='parameters.{}'.format(param_key),
+                required=False,
+                default=workflow_dict['parameters'][param_key]['default'],
+                help=workflow_dict['parameters'][param_key]['label']
+            )
+        dynamic_parser.add_argument(
+            '-o', '--output',
+            type=str,
+            default='~/geneflow-output',
+            help='Output Folder'
+        )
+        dynamic_parser.add_argument(
+            '-n', '--name',
+            type=str,
+            default='geneflow-job',
+            help='Name of Job'
+        )
+        dynamic_parser.add_argument(
+            '-w', '--work',
+            nargs='+',
+            type=str,
+            default=[],
+            help='Work Directory'
+        )
+        dynamic_parser.add_argument(
+            '--exec-context', '--ec',
+            nargs='+',
+            type=str,
+            dest='exec_context',
+            default=[],
+            help='Execution Contexts'
+        )
+        dynamic_parser.add_argument(
+            '--exec-method', '--em',
+            nargs='+',
+            type=str,
+            dest='exec_method',
+            default=[],
+            help='Execution Methods'
+        )
+        dynamic_parser.add_argument(
+            '--exec-param', '--ep',
+            nargs='+',
+            type=str,
+            dest='exec_param',
+            default=[],
+            help='Execution Parameters'
+        )
+
+        dynamic_args = dynamic_parser.parse_known_args(other_args)
+
+        return dynamic_args[0]
+
+    if 'gooey' in sys.modules:
+        @Gooey(
+            program_name='GeneFlow: {}'.format(workflow_dict['name']),
+            program_description=workflow_dict['description'],
+            target='gf --log-level={} run {}'.format(args.log_level, args.workflow_path),
+            monospace_display=True
+        )
+        def parse_dynamic_args_gui(workflow_dict):
+            """
+            Parse dynamic args based on workflow dictionary as well as
+            some static args. Display a GUI interface.
+
+            Args:
+                other_args: List of remaining args from initial parse of
+                    workflow path.
+                workflow_dict: Workflow dictionary
+
+            Returns:
+                On success: List of parsed arguments.
+                On failure: False.
+
+            """
+            # parse dynamic args. these are determined from workflow definition
+            dynamic_parser = GooeyParser()
+            input_group = dynamic_parser.add_argument_group(
+                "Workflow Inputs",
+                "Files or folders to be passed to the workflow"
+            )
+            for input_key in workflow_dict['inputs']:
+                widget = 'FileChooser'
+                if workflow_dict['inputs'][input_key]['type'] == 'Directory':
+                    widget = 'DirChooser'
+                input_group.add_argument(
+                    '--in.{}'.format(input_key),
+                    dest='inputs.{}'.format(input_key),
+                    required=False,
+                    default=workflow_dict['inputs'][input_key]['default'],
+                    help=workflow_dict['inputs'][input_key]['label'],
+                    widget=widget
+                )
+            param_group = dynamic_parser.add_argument_group(
+                "Workflow Parameters",
+                "Number or string parameters to be passed to the workflow"
+            )
+            for param_key in workflow_dict['parameters']:
+                param_group.add_argument(
+                    '--param.{}'.format(param_key),
+                    dest='parameters.{}'.format(param_key),
+                    required=False,
+                    default=workflow_dict['parameters'][param_key]['default'],
+                    help=workflow_dict['parameters'][param_key]['label']
+                )
+            job_group = dynamic_parser.add_argument_group(
+                "Job Options",
+                "Output/intermediate folders and job name"
+            )
+            job_group.add_argument(
+                '-o', '--output',
+                type=str,
+                default='~/geneflow-output',
+                help='Output Folder',
+                widget='DirChooser'
+            )
+            job_group.add_argument(
+                '-n', '--name',
+                type=str,
+                default='geneflow-job',
+                help='Name of Job'
+            )
+            job_group.add_argument(
+                '-w', '--work',
+                nargs='+',
+                type=str,
+                default=[],
+                help='Work Directory',
+                widget='DirChooser'
+            )
+            exec_group = dynamic_parser.add_argument_group(
+                "Execution Options",
+                "Customize workflow execution"
+            )
+            exec_group.add_argument(
+                '--exec-context', '--ec',
+                nargs='+',
+                type=str,
+                dest='exec_context',
+                default=[],
+                help='Execution Contexts'
+            )
+            exec_group.add_argument(
+                '--exec-method', '--em',
+                nargs='+',
+                type=str,
+                dest='exec_method',
+                default=[],
+                help='Execution Methods'
+            )
+            exec_group.add_argument(
+                '--exec-param', '--ep',
+                nargs='+',
+                type=str,
+                dest='exec_param',
+                default=[],
+                help='Execution Parameters'
+            )
+
+            dynamic_args = dynamic_parser.parse_args(other_args)
+
+            return dynamic_args
+
     # get dynamic args
-    dynamic_args = parse_dynamic_args(other_args, workflow_dict)
+    if args.gui and 'gooey' in sys.modules:
+        dynamic_args = parse_dynamic_args_gui(workflow_dict)
+    else:
+        dynamic_args = parse_dynamic_args(workflow_dict)
 
     # get absolute path to job file if provided
     job_path = None

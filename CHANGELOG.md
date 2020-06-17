@@ -1,6 +1,27 @@
 # Changelog
 
 
+## 2020/06/12 - v2.0.0-alpha.4: enhancement and bug fix release
+
+1. Major enhancement: add "Gooey" graphical interface option for running workflows.
+
+2. Major enhancement: add optional execuction "init" parameter to CLI to allow decoupling of apps from environment.
+
+3. Add "test" field to workflow schema to indicate test workflows.
+
+4. Fix bug: CLI help displays more detailed instructions.
+
+5. Work directory, execution context, method, and param options can be specified as lists.
+
+6. Move final data to output directory instead of copying for local contexts.
+
+7. Fix bug: App inputs or parameters that are not required and that do not have defaults should not be set.
+
+8. Fix bug: Empty _log directory should not cause workflow to fail.
+
+9. Allow underscores in slugified step and output folder names.
+
+
 ## 2020/05/14 - v2.0.0-alpha.3: enhancement and bug fix release
 
 1. Simplify workflow and app structure.

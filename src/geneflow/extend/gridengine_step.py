@@ -222,7 +222,8 @@ class GridengineStep(WorkflowStep):
             if input_key in map_item['template']:
                 inputs[input_key] = map_item['template'][input_key]
             else:
-                inputs[input_key] = self._app['inputs'][input_key]['default']
+                if self._app['inputs'][input_key]['default']:
+                    inputs[input_key] = self._app['inputs'][input_key]['default']
 
         # load default app parameters, overwrite with template parameters
         parameters = {}
@@ -230,8 +231,9 @@ class GridengineStep(WorkflowStep):
             if param_key in map_item['template']:
                 parameters[param_key] = map_item['template'][param_key]
             else:
-                parameters[param_key] \
-                    = self._app['parameters'][param_key]['default']
+                if self._app['parameters'][param_key]['default'] not in [None, '']:
+                    parameters[param_key] \
+                        = self._app['parameters'][param_key]['default']
 
         # get full path of wrapper script
         path = shutil.which(self._app['implementation']['local']['script'])
@@ -266,6 +268,10 @@ class GridengineStep(WorkflowStep):
         # add exeuction method
         args.append('--exec_method={}'.format(self._step['execution']['method']))
 
+        # specify execution init commands if 'init' param given
+        if 'init' in self._step['execution']['parameters']:
+            args.append('--exec_init={}'.format(self._step['execution']['parameters']['init']))
+
         Log.a().debug(
             '[step.%s]: command: %s -> %s',
             self._step['name'],
@@ -276,8 +282,8 @@ class GridengineStep(WorkflowStep):
         # construct job name
         name = 'gf-{}-{}-{}'.format(
             map_item['attempt'],
-            slugify(self._step['name']),
-            slugify(map_item['template']['output'])
+            slugify(self._step['name'], regex_pattern=r'[^-a-z0-9_]+'),
+            slugify(map_item['template']['output'], regex_pattern=r'[^-a-z0-9_]+')
         )
 
         # construct paths for logging stdout and stderr

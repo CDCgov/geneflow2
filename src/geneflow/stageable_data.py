@@ -40,6 +40,7 @@ class StageableData:
         self._source_context = source_context
         # not staged by default
         self._staged = False
+        self._staged_final = False
         # rm (clean) folders before staging?
         self._clean = clean
 
@@ -91,7 +92,7 @@ class StageableData:
 
     def stage(self, **kwargs):
         """
-        Copy data to all contexts from source URI.
+        Copy data to all contexts except 'final' from source URI.
 
         Set _staged indicator to True on success.
 
@@ -118,21 +119,91 @@ class StageableData:
                     )
                 )
 
-                if not DataManager.copy(
-                        parsed_src_uri=self._parsed_data_uris\
-                            [self._source_context],
-                        parsed_dest_uri=self._parsed_data_uris[context],
-                        **kwargs
-                ):
-                    msg = 'cannot stage data by copying from {} to {}'.format(
-                        self._parsed_data_uris[self._source_context]\
-                            ['chopped_uri'],
-                        self._parsed_data_uris[context]['chopped_uri']
-                    )
-                    Log.an().error(msg)
-                    return self._fatal(msg)
+                if context != 'final':
+                    if not DataManager.copy(
+                            parsed_src_uri=self._parsed_data_uris\
+                                [self._source_context],
+                            parsed_dest_uri=self._parsed_data_uris[context],
+                            **kwargs
+                    ):
+                        msg = 'cannot stage data by copying from {} to {}'.format(
+                            self._parsed_data_uris[self._source_context]\
+                                ['chopped_uri'],
+                            self._parsed_data_uris[context]['chopped_uri']
+                        )
+                        Log.an().error(msg)
+                        return self._fatal(msg)
 
         self._staged = True
+
+        return True
+
+
+    def stage_final(self, **kwargs):
+        """
+        Move data to final context from source URI.
+
+        Set _staged_final indicator to True on success.
+
+        Args:
+            self: class instance.
+            **kwargs: additional arguments required by DataManager.move().
+
+        Returns:
+            True or False.
+
+        """
+        for context in self._parsed_data_uris:
+            if context != self._source_context:
+                if self._clean:
+                    # remove target URI first
+                    pass
+
+                Log.some().debug(
+                    'staging final data: {}->{} to {}->{}'.format(
+                        self._source_context,
+                        self._parsed_data_uris[self._source_context]['chopped_uri'],
+                        context,
+                        self._parsed_data_uris[context]['chopped_uri']
+                    )
+                )
+
+                if context == 'final':
+                    if (
+                            self._parsed_data_uris[self._source_context]['scheme'] == 'local'
+                            and self._parsed_data_uris[context]['scheme'] == 'local'
+                    ):
+                        # move final data instead of copy, only for local-->local schemes
+                        if not DataManager.move(
+                                parsed_src_uri=self._parsed_data_uris\
+                                    [self._source_context],
+                                parsed_dest_uri=self._parsed_data_uris[context],
+                                **kwargs
+                        ):
+                            msg = 'cannot stage final data by copying from {} to {}'.format(
+                                self._parsed_data_uris[self._source_context]\
+                                    ['chopped_uri'],
+                                self._parsed_data_uris[context]['chopped_uri']
+                            )
+                            Log.an().error(msg)
+                            return self._fatal(msg)
+
+                    else:
+                        if not DataManager.copy(
+                                parsed_src_uri=self._parsed_data_uris\
+                                    [self._source_context],
+                                parsed_dest_uri=self._parsed_data_uris[context],
+                                **kwargs
+                        ):
+                            msg = 'cannot stage final data by copying from {} to {}'.format(
+                                self._parsed_data_uris[self._source_context]\
+                                    ['chopped_uri'],
+                                self._parsed_data_uris[context]['chopped_uri']
+                            )
+                            Log.an().error(msg)
+                            return self._fatal(msg)
+
+        self._staged_final = True
 
         return True
 
@@ -149,6 +220,20 @@ class StageableData:
 
         """
         return self._staged
+
+
+    def is_staged_final(self):
+        """
+        Check if data has been staged to final contexts.
+
+        Args:
+            self: class instance.
+
+        Returns:
+            True if staged, False if not staged.
+
+        """
+        return self._staged_final
 
 
     def get_data_uri(self, context):
