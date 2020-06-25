@@ -465,14 +465,14 @@ class AgaveStep(WorkflowStep):
 
     def retry_failed(self):
         """
-        Check if any jobs failed or stopped.
+        Restart any jobs that failed or stopped.
 
         Args:
             self: class instance.
 
         Returns:
-            If no failure: True.
-            On failure: Error message.
+            True if failed/stopped jobs restarted successfully
+            False failed/stopped jobs not restarted due to error or limit reached.
 
         """
         # check if any jobs failed or stopped

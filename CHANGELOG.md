@@ -1,6 +1,13 @@
 # Changelog
 
 
+## 2020/06/29 - v2.0.0-beta.1: enhancement and bug fix release
+
+1. Major enhancement: add automatic retry of gridengine jobs when they fail.
+
+2. Fix bug: wrapper script safeRunCommand does not detect error exit status when commands are run within pipe.
+
+
 ## 2020/06/12 - v2.0.0-alpha.4: enhancement and bug fix release
 
 1. Major enhancement: add "Gooey" graphical interface option for running workflows.

@@ -418,24 +418,50 @@ class GridengineStep(WorkflowStep):
 
             map_item['run'][map_item['attempt']]['status'] = map_item['status']
 
+            if map_item['status'] == 'FAILED' and map_item['attempt'] < 3:
+                # retry job if not at limit
+                if not self.retry_failed(map_item):
+                    Log.a().warning(
+                        '[step.%s]: cannot retry failed gridengine job (%s)',
+                        self._step['name'],
+                        map_item['template']['output']
+                    )
+
         self._update_status_db(self._status, '')
 
         return True
 
 
-    def retry_failed(self):
+    def retry_failed(self, map_item):
         """
-        Retry any map-reduce jobs that failed.
-
-        This is not-yet supported for gridengine apps.
+        Retry a job.
 
         Args:
             self: class instance.
 
         Returns:
-            False.
+            True if failed/stopped jobs restarted successfully
+            False failed/stopped jobs not restarted due to error or limit reached.
 
         """
-        msg = 'retry not yet supported for gridengine apps'
-        Log.an().error(msg)
-        return self._fatal(msg)
+        # retry job
+        Log.some().info(
+            '[step.%s]: retrying gridengine job (%s), attempt number %s',
+            self._step['name'],
+            map_item['template']['output'],
+            map_item['attempt']+1
+        )
+
+        # add another run to list
+        map_item['attempt'] += 1
+        map_item['run'].append({})
+        if not self._run_map(map_item):
+            Log.a().warning(
+                '[step.%s]: cannot retry gridengine job (%s), attempt number %s',
+                self._step['name'],
+                map_item['template']['output'],
+                map_item['attempt']
+            )
+            return False
+
+        return True
