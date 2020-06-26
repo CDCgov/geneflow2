@@ -418,7 +418,7 @@ class GridengineStep(WorkflowStep):
 
             map_item['run'][map_item['attempt']]['status'] = map_item['status']
 
-            if map_item['status'] == 'FAILED' and map_item['attempt'] < 3:
+            if map_item['status'] == 'FAILED' and map_item['attempt'] < 5:
                 # retry job if not at limit
                 if not self.retry_failed(map_item):
                     Log.a().warning(
@@ -440,8 +440,8 @@ class GridengineStep(WorkflowStep):
             self: class instance.
 
         Returns:
-            True if failed/stopped jobs restarted successfully
-            False failed/stopped jobs not restarted due to error or limit reached.
+            True if failed/stopped job restarted successfully
+            False if failed/stopped job not restarted due to error
 
         """
         # retry job

@@ -448,7 +448,7 @@ class AgaveStep(WorkflowStep):
                         map_item['run'][map_item['attempt']]['hpc_job_id'] \
                             = match.group(1)
 
-                        # log hpc job id in
+                        # log hpc job id
                         Log.some().debug(
                             '[step.%s]: hpc job id: %s -> %s',
                             self._step['name'],
@@ -458,61 +458,51 @@ class AgaveStep(WorkflowStep):
 
                         break
 
+            if map_item['status'] == 'FAILED' and map_item['attempt'] < 5:
+                # retry job if not at limit
+                if not self.retry_failed(map_item):
+                    Log.a().warning(
+                        '[step.%s]: cannot retry failed agave job (%s)',
+                        self._step['name'],
+                        map_item['template']['output']
+                    )
+
         self._update_status_db(self._status, '')
 
         return True
 
 
-    def retry_failed(self):
+    def retry_failed(self, map_item):
         """
-        Restart any jobs that failed or stopped.
+        Retry a job.
 
         Args:
             self: class instance.
 
         Returns:
-            True if failed/stopped jobs restarted successfully
-            False failed/stopped jobs not restarted due to error or limit reached.
+            True if failed/stopped job restarted successfully
+            False if failed/stopped job not restarted due to error
 
         """
-        # check if any jobs failed or stopped
-        for map_item in self._map:
-            if (
-                    map_item['status'] == 'FAILED'
-                    or map_item['status'] == 'STOPPED'
-            ):
-                # retry the job, if not at limit
-                if map_item['attempt'] >= self._config['agave']['job_retry']:
-                    msg = (
-                        'agave job failed ({}) for step "{}", '
-                        'retries for map item "{}" reached limit of {}'
-                    ).format(
-                        map_item['run'][map_item['attempt']]['agave_job_id'],
-                        self._step['name'],
-                        map_item['filename'],
-                        self._config['agave']['job_retry']
-                    )
-                    Log.an().error(msg)
-                    return self._fatal(msg)
+        # retry job
+        Log.some().info(
+            '[step.%s]: retrying agave job (%s), attempt number %s',
+            self._step['name'],
+            map_item['template']['output'],
+            map_item['attempt']+1
+        )
 
-                # retry job
-                Log.some().info(
-                    (
-                        'agave job failed (%s) for step "%s", '
-                        'retrying map item "%s"'
-                    ),
-                    map_item['run'][map_item['attempt']]['agave_job_id'],
-                    self._step['name'],
-                    map_item['filename']
-                )
-                # add another run to list
-                map_item['attempt'] += 1
-                map_item['run'].append({})
-                if not self._run_map(map_item):
-                    msg = 'cannot re-run agave job for map item "{}"'\
-                        .format(map_item['filename'])
-                    Log.an().error(msg)
-                    return self._fatal(msg)
+        # add another run to list
+        map_item['attempt'] += 1
+        map_item['run'].append({})
+        if not self._run_map(map_item):
+            Log.a().warning(
+                '[step.%s]: cannot retry agave job (%s), attempt number %s',
+                self._step['name'],
+                map_item['template']['output'],
+                map_item['attempt']
+            )
+            return False
 
         return True
 
