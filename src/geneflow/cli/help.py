@@ -146,7 +146,7 @@ def help_func(args, other_args, subparser=None):
     print('\t--em,--exec-method: Exeuction methods, e.g., singularity, docker, environment.')
     print('\t\tThese can be specified for all workflow steps with "default:[METHOD]"')
     print('\t\tor for specific steps with "step-name:[METHOD]". By default each app associated')
-    print('\t\twith a workflow step tries automatically detect the execution method.')
+    print('\t\twith a workflow step tries to automatically detect the execution method.')
     print('\t--ep,--exec-param: Execution parameters, e.g., slots, mem, or other.')
     print('\t\tThese can be specified for all workflow steps with "default.slots:[VALUE]"')
     print('\t\tor for specific steps with "step-name.slots:[VALUE]". Execution parameters')
