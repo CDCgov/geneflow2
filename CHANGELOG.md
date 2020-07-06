@@ -1,13 +1,13 @@
 # Changelog
 
 
-## 2020/07/01 - v2.0.0-beta.1: enhancement and bug fix release
+## 2020/07/15 - v2.0.0-beta.1: enhancement and bug fix release
 
 1. Major enhancement: add automatic retry of gridengine and agave jobs when they fail.
 
 2. Enhancement: add configurable step checkpoints to allow workflow to continue even when some jobs fail.
 
-3. Fix bug: wrapper script safeRunCommand does not detect error exit status when commands are run within pipe.
+3. Fix bug: wrapper script safeRunCommand does not detect error exit status when commands are piped.
 
 
 ## 2020/06/12 - v2.0.0-alpha.4: enhancement and bug fix release
