@@ -645,7 +645,41 @@ class WorkflowStep(StageableData):
         raise NotImplementedError
 
 
-    def all_finished(self):
+    def checkpoint(self):
+        """
+        Check if step meets completion criteria, based on "checkpoint"
+        execution parameter.
+
+        Args:
+            self: class instance.
+
+        Returns:
+            True if step meets completion criteria.
+            False if it does not.
+
+        """
+        checkpoint = self._step['execution']['parameters'].get(
+            'checkpoint', 'any'
+        )
+
+        finished = self.get_finished()
+
+        if checkpoint == 'all':
+            # all jobs must be finished
+            Log.some().info('[step.%s]: checkpoint: all jobs must finish', self._step['name'])
+            return all(finished)
+        elif checkpoint == 'none':
+            # no jobs have to be finished
+            Log.some().info('[step.%s]: checkpoint: jobs do not have to finish', self._step['name'])
+            return True
+        else:
+            # at least one job must be finished
+            # default to 'any' if anything other than 'all', 'any', or 'none is used
+            Log.some().info('[step.%s]: checkpoint: at least one job must finish', self._step['name'])
+            return any(finished)
+
+
+    def get_finished(self):
         """
         Check if all map-reduce jobs have finished.
 
@@ -658,8 +692,7 @@ class WorkflowStep(StageableData):
 
         """
         finished = [map_item['status'] == 'FINISHED' for map_item in self._map]
-
-        return all(finished)
+        return finished
 
 
     def all_done(self):
@@ -684,27 +717,6 @@ class WorkflowStep(StageableData):
         ]
 
         return all(done)
-
-
-    def any_failed(self):
-        """
-        Check if any map-reduce jobs failed or stopped.
-
-        Args:
-            self: class instance.
-
-        Returns:
-            True if any map-reduce item is in the 'FAILED' state.
-            False if no map-reduce item is in the 'FAILED' state.
-
-        """
-        failed = [
-            map_item['status'] == 'FAILED'\
-            or map_item['status'] == 'STOPPED'\
-            for map_item in self._map
-        ]
-
-        return any(failed)
 
 
     def retry_failed(self):

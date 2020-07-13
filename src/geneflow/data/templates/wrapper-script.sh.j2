@@ -203,12 +203,13 @@ usage () {
 # report error code for command
 safeRunCommand() {
     cmd="$@"
-    eval "$cmd"
-    ERROR_CODE=$?
-    if [ ${ERROR_CODE} -ne 0 ]; then
-        echo "Error when executing command '${cmd}'"
-        exit ${ERROR_CODE}
-    fi
+    eval "$cmd; "'PIPESTAT=("${PIPESTATUS[@]}")'
+    for i in ${!PIPESTAT[@]}; do
+        if [ ${PIPESTAT[$i]} -ne 0 ]; then
+            echo "Error when executing command #${i}: '${cmd}'"
+            exit ${PIPESTAT[$i]}
+        fi
+    done
 }
 
 # print message and exit
@@ -313,7 +314,7 @@ eval set -- "$PARSED"
 {% endif %}
 {% endfor %}
 EXEC_METHOD="auto"
-EXEC_INIT=""
+EXEC_INIT=":"
 ## ****************************************************************************
 
 ## ****************************************************************************
