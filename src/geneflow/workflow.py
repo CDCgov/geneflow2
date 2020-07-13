@@ -787,9 +787,9 @@ class Workflow:
 
                 Log.some().debug('[%s]: all jobs complete', node_name)
 
-                # check if any jobs failed
-                if node['node'].any_failed():
-                    msg = 'jobs failed for step {}'.format(node_name)
+                # check1 if step satisfies checkpoint of all, any, or none job completion
+                if not node['node'].checkpoint():
+                    msg = 'failed checkpoint for step {}'.format(node_name)
                     Log.an().error(msg)
                     return self._fatal(msg)
 
