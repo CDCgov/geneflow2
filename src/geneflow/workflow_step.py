@@ -662,7 +662,23 @@ class WorkflowStep(StageableData):
             'checkpoint', 'any'
         )
 
-        finished = self.get_finished()
+        status = self.get_status()
+        finished = [item == 'FINISHED' for item in status.values()]
+        Log.some().info(
+            '[step.%s]: checkpoint: %s of %s job(s) finished',
+            self._step['name'],
+            sum(finished),
+            len(finished)
+        )
+
+        # print summary of job result in debug mode
+        for item in sorted(status):
+            Log.some().debug(
+                '[step.%s]: checkpoint: %s -> %s',
+                self._step['name'],
+                item,
+                status[item]
+            )
 
         if checkpoint == 'all':
             # all jobs must be finished
@@ -679,7 +695,7 @@ class WorkflowStep(StageableData):
             return any(finished)
 
 
-    def get_finished(self):
+    def get_status(self):
         """
         Check if all map-reduce jobs have finished.
 
@@ -687,12 +703,11 @@ class WorkflowStep(StageableData):
             self: class instance.
 
         Returns:
-            True if all map-reduce items are in the 'FINISHED' state.
-            False if at least one job is not in the 'FINISHED' state.
+            Dictionary with status of all map item jobs.
 
         """
-        finished = [map_item['status'] == 'FINISHED' for map_item in self._map]
-        return finished
+        status = {map_item['template']['output']: map_item['status'] for map_item in self._map}
+        return status
 
 
     def all_done(self):
