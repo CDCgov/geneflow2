@@ -645,7 +645,57 @@ class WorkflowStep(StageableData):
         raise NotImplementedError
 
 
-    def all_finished(self):
+    def checkpoint(self):
+        """
+        Check if step meets completion criteria, based on "checkpoint"
+        execution parameter.
+
+        Args:
+            self: class instance.
+
+        Returns:
+            True if step meets completion criteria.
+            False if it does not.
+
+        """
+        checkpoint = self._step['execution']['parameters'].get(
+            'checkpoint', 'any'
+        )
+
+        status = self.get_status()
+        finished = [item == 'FINISHED' for item in status.values()]
+        Log.some().info(
+            '[step.%s]: checkpoint: %s of %s job(s) finished',
+            self._step['name'],
+            sum(finished),
+            len(finished)
+        )
+
+        # print summary of job result in debug mode
+        for item in sorted(status):
+            Log.some().debug(
+                '[step.%s]: checkpoint: %s -> %s',
+                self._step['name'],
+                item,
+                status[item]
+            )
+
+        if checkpoint == 'all':
+            # all jobs must be finished
+            Log.some().info('[step.%s]: checkpoint: all jobs must finish', self._step['name'])
+            return all(finished)
+        elif checkpoint == 'none':
+            # no jobs have to be finished
+            Log.some().info('[step.%s]: checkpoint: jobs do not have to finish', self._step['name'])
+            return True
+        else:
+            # at least one job must be finished
+            # default to 'any' if anything other than 'all', 'any', or 'none is used
+            Log.some().info('[step.%s]: checkpoint: at least one job must finish', self._step['name'])
+            return any(finished)
+
+
+    def get_status(self):
         """
         Check if all map-reduce jobs have finished.
 
@@ -653,13 +703,11 @@ class WorkflowStep(StageableData):
             self: class instance.
 
         Returns:
-            True if all map-reduce items are in the 'FINISHED' state.
-            False if at least one job is not in the 'FINISHED' state.
+            Dictionary with status of all map item jobs.
 
         """
-        finished = [map_item['status'] == 'FINISHED' for map_item in self._map]
-
-        return all(finished)
+        status = {map_item['template']['output']: map_item['status'] for map_item in self._map}
+        return status
 
 
     def all_done(self):
@@ -684,27 +732,6 @@ class WorkflowStep(StageableData):
         ]
 
         return all(done)
-
-
-    def any_failed(self):
-        """
-        Check if any map-reduce jobs failed or stopped.
-
-        Args:
-            self: class instance.
-
-        Returns:
-            True if any map-reduce item is in the 'FAILED' state.
-            False if no map-reduce item is in the 'FAILED' state.
-
-        """
-        failed = [
-            map_item['status'] == 'FAILED'\
-            or map_item['status'] == 'STOPPED'\
-            for map_item in self._map
-        ]
-
-        return any(failed)
 
 
     def retry_failed(self):
