@@ -1,6 +1,11 @@
 # Changelog
 
 
+## 2020/08/19 - v2.0.0-beta.2: bug fix release
+
+1. Fix bug: Job work URI must be set for 
+
+
 ## 2020/07/15 - v2.0.0-beta.1: enhancement and bug fix release
 
 1. Major enhancement: add automatic retry of gridengine and agave jobs when they fail.

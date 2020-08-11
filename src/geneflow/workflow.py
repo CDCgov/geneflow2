@@ -475,9 +475,10 @@ class Workflow:
         #   use the 'data_scheme' for each execution context
         #   and place into a set to remove repeats
         for context in {
-                Contexts.mapping[exec_context]['data_scheme']
-                for exec_context in self._exec_contexts
-        }:
+                Contexts.get_data_scheme_of_exec_context(con)
+                for con in self._exec_contexts
+        } | self._data_contexts:
+
             # work_uri must be set for each exec_context
             if context not in self._job['work_uri']:
                 msg = 'missing work_uri for context: {}'.format(context)
