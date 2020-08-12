@@ -3,7 +3,7 @@
 
 ## 2020/08/19 - v2.0.0-beta.2: bug fix release
 
-1. Fix bug: Job work URI must be set for 
+1. Fix bug: initialization of context URIs fails when job work URI not set for context.
 
 
 ## 2020/07/15 - v2.0.0-beta.1: enhancement and bug fix release

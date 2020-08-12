@@ -477,7 +477,8 @@ class Workflow:
         for context in {
                 Contexts.get_data_scheme_of_exec_context(con)
                 for con in self._exec_contexts
-        } | self._data_contexts:
+        }:
+        #} | self._data_contexts:
 
             # work_uri must be set for each exec_context
             if context not in self._job['work_uri']:
