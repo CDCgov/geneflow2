@@ -347,6 +347,12 @@ class WorkflowDAG:
                             [node['name']] = parsed_uri
 
                     else:
+                        # skip if _parsed_job_work_uri is not defined for this context
+                        # this implies that there is no execution defined for that context,
+                        # so no need to setup the data staging location at the work_uri
+                        if context not in self._parsed_job_work_uri:
+                            continue
+
                         # switch context of input URI
                         new_base_uri = '{}/_input-{}'.format(
                             self._parsed_job_work_uri[context]['chopped_uri'],

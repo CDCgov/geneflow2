@@ -334,7 +334,7 @@ while true; do
             if [ -z "${{ '{' }}{{ key }}{{ '}' }}" ]; then
                 {{ key|upper }}=$2
             else
-                {{ key|upper }}=${{ '{' }}{{ key }}{{ '}' }}
+                {{ key|upper }}="${{ '{' }}{{ key }}{{ '}' }}"
             fi
             shift 2
             ;;
@@ -344,7 +344,7 @@ while true; do
             if [ -z "${{ '{' }}{{ key }}{{ '}' }}" ]; then
                 {{ key|upper }}=$2
             else
-                {{ key|upper }}=${{ '{' }}{{ key }}{{ '}' }}
+                {{ key|upper }}="${{ '{' }}{{ key }}{{ '}' }}"
             fi
             shift 2
             ;;
@@ -353,7 +353,7 @@ while true; do
             if [ -z "${exec_method}" ]; then
                 EXEC_METHOD=$2
             else
-                EXEC_METHOD=${exec_method}
+                EXEC_METHOD="${exec_method}"
             fi
             shift 2
             ;;
@@ -361,7 +361,7 @@ while true; do
             if [ -z "${exec_init}" ]; then
                 EXEC_INIT=$2
             else
-                EXEC_INIT=${exec_init}
+                EXEC_INIT="${exec_init}"
             fi
             shift 2
             ;;
