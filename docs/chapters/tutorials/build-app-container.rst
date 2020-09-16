@@ -38,19 +38,16 @@ Copy the following text into the file and save it.
     %files
     
       test.txt /opt/test.txt
-    
-    
+        
     %environment
 
       TMPDIR=/opt
       export TMPDIR   
     
-
     %labels
     
        AUTHOR user
-    
-    
+        
     %post
     
       #install STAR
@@ -64,14 +61,12 @@ Copy the following text into the file and save it.
       apt-get update
       apt-get install -y libcurl4-openssl-dev
       apt-get install -y libxml2-dev
-    
-    
+        
       #Install R packages
       export TMPDIR=/opt
       R --slave -e 'install.packages(c("BiocManager","docopt","stringi", "stringr"))'
       R --slave -e 'BiocManager::install(c("DESeq2"))'
-    
-    
+        
     %runscript
       
       echo "the fruits of your success will be in direct ratio to the honesty and sincerity of your own effort in keeping your own records, doing your own thinking, and reaching your own conclusions. - Jesse Livermore"
@@ -151,7 +146,6 @@ In the final section of the code:
 1. We export and set `TMPDIR` as "opt" because R will download and compile packages in the directory specified by the TMPDIR variable, and /tmp is often set as noexec
 2. We install the R packages (including bioconductor)
 3. We install the Bioconductor package DESeq2
-
 
 .. code-block:: text
 

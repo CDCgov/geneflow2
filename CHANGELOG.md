@@ -1,8 +1,10 @@
 # Changelog
 
-## 2020/09/16 - v2.0.0: bug fix release
+## 2020/09/16 - v2.0.0: enhancement and bug fix release
 
 1. Fix bug: remove DirChooser widget from --work argument for Gooey
+
+2. Update documentation and tutorials to reflect all v2.0 changes
 
 
 ## 2020/08/19 - v2.0.0-beta.2: bug fix release

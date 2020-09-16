@@ -13,13 +13,13 @@ Clone the previous "Hello World!" app from the Git repo (be sure to replace Git 
 .. code-block:: text
 
     cd ~/geneflow_work
-    git clone https://github.com/[USER]/hello-world-gf.git
+    git clone https://github.com/[USER]/hello-world-gf2.git
 
-Note: if the ``hello-world-gf`` directory still exists with the contents of the previous app tutorial, do a ``git pull`` instead:
+Note: if the ``hello-world-gf2`` directory still exists with the contents of the previous app tutorial, do a ``git pull`` instead:
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-gf
+    cd ~/geneflow_work/hello-world-gf2
     git pull
 
 Define an App Input
@@ -29,9 +29,9 @@ Update the app metadata to reflect the new functionality:
 
 .. code-block:: text
 
-    vi ./config.yaml
+    vi ./app.yaml
 
-Change the ``description`` field to indicate a change in the app; add a ``repo_uri`` field (with [USER] replaced with your username, and github.com replaced with the appropriate Git service); update the ``version`` field to ``0.2``:
+Change the ``description`` field to indicate a change in the app; add a ``git`` field (with [USER] replaced with your username, and github.com replaced with the appropriate Git service); update the ``version`` field to ``0.2``:
 
 .. code-block:: yaml
 
@@ -41,13 +41,13 @@ Change the ``description`` field to indicate a change in the app; add a ``repo_u
     name: hello-world-gf
     # description: short description for the app
     description: Updated hello world GeneFlow app
-    # repo_uri: link to the app's git repo
-    repo_uri: https://github.com/[USER]/hello-world-gf.git
+    # git: link to the app's git repo
+    git: https://github.com/[USER]/hello-world-gf2.git
     # version: must be incremented every time this file, or any file in the app
     # project is modified
     version: '0.2'
 
-Next, update the ``file`` input in the ``inputs`` section of the ``config.yaml`` file. Change the ``label`` and ``description`` of the ``file`` input to ``Input text file``. Change the ``required`` field to ``true`` and add a ``test_value`` field with value ``${SCRIPT_DIR}/data/file.txt``. The ``test_value`` field is only used when running the app's test script. We will define the ``/data/file.txt`` file in the next section. ``${SCRIPT_DIR}`` in the context of the test script is the directory in which the test script is located. The updated ``inputs`` section of the ``config.yaml`` file should look like:
+Next, update the ``file`` input in the ``inputs`` section of the ``app.yaml`` file. Change the ``label`` and ``description`` of the ``file`` input to ``Input text file``. Change the ``required`` field to ``true`` and add a ``test_value`` field with value ``${SCRIPT_DIR}/data/file.txt``. The ``test_value`` field is only used when running the app's test script. We will define the ``/data/file.txt`` file in the next section. ``${SCRIPT_DIR}`` in the context of the test script is the directory in which the test script is located. The updated ``inputs`` section of the ``app.yaml`` file should look like:
 
 .. code-block:: yaml
 
@@ -73,7 +73,7 @@ Finally, change the execution commands of the app in the ``exec_methods`` sectio
 
 The modified execution block first checks if the ``cat`` command is available (it should be available in all standard Linux systems). It then runs the ``cat`` command to print the contents of the file passed as the ``file`` input. ``${FILE_FULL}`` is a Bash variable that is automatically defined for the ``file`` input, and represents the full path of the ``file`` input. 
 
-Save and close the ``config.yaml`` file.
+Save and close the ``app.yaml`` file.
 
 Add a Test File to the App
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -82,7 +82,7 @@ Previously, we added a file called ``file.txt`` to the test folder. Modify this 
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-gf/test/data
+    cd ~/geneflow_work/hello-world-gf2/test/data
     vi ./file.txt
 
 Make sure the file has the contents:
@@ -96,21 +96,14 @@ Save and close the ``file.txt`` file.
 Re-"Make" the App
 ~~~~~~~~~~~~~~~~~
 
-Now that the ``config.yaml`` file has been updated and the test file defined. Rebuild the app with the following commands:
+Now that the ``app.yaml`` file has been updated and the test file defined. Rebuild the app with the following commands:
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-gf
+    cd ~/geneflow_work/hello-world-gf2
     geneflow make-app .
 
-This should re-generate the ``app.yaml.j2``, ``agave-app-def.json.j2``, ``hello-world-gf.sh``, and ``test.sh`` scripts. 
-
-Make sure the app wrapper script and test script are executable:
-
-.. code-block:: text
-
-    chmod +x ./assets/hello-world-gf.sh
-    chmod +x ./test/test.sh
+This should re-generate the ``agave-app-def.json.j2``, ``hello-world-gf2.sh``, and ``test.sh`` scripts. 
 
 Test the App
 ~~~~~~~~~~~~
@@ -119,7 +112,7 @@ Run the ``test.sh`` script to test the app:
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-gf/test
+    cd ~/geneflow_work/hello-world-gf2/test
     ./test.sh
 
 You should see output similar to the following:
@@ -154,7 +147,7 @@ Update the app ``README.rst`` file to reflect changes to the app:
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-gf
+    cd ~/geneflow_work/hello-world-gf2
     vi ./README.rst
 
 Modify the file so it looks like the following:
@@ -185,7 +178,7 @@ Finally, commit the updated app to the Git repo and update its tag to reflect th
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-gf
+    cd ~/geneflow_work/hello-world-gf2
     git add -u
     git commit -m "update app input"
     git tag 0.2
@@ -201,38 +194,14 @@ Checkout the previous "Hello World!" workflow:
 .. code-block:: text
 
     cd ~/geneflow_work
-    git clone https://github.com/[USER]/hello-world-workflow-gf.git
+    git clone https://github.com/[USER]/hello-world-workflow-gf2.git
 
-Note: if the ``hello-world-workflow-gf`` directory still exists with the contents of the previous workflow tutorial, do a ``git pull`` instead:
+Note: if the ``hello-world-workflow-gf2`` directory still exists with the contents of the previous workflow tutorial, do a ``git pull`` instead:
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-workflow-gf
+    cd ~/geneflow_work/hello-world-workflow-gf2
     git pull
-
-Update the App Repo
-~~~~~~~~~~~~~~~~~~~
-
-Update the ``apps-repo.yaml`` file so that the ``hello-world`` app item points to the latest "Hello World!" app repo. Open the file with:
-
-.. code-block:: text
-
-    cd ~/geneflow_work/hello-world-workflow-gf/workflow
-    vi ./apps-repo.yaml
-
-And modify the file so that it contains a single app item similar to:
-
-.. code-block:: text
-
-    - name: hello-world
-      repo: https://github.com/[USER]/hello-world-gf.git
-      tag: '0.2'
-      folder: hello-world-gf-0.2
-      asset: none
-
-Be sure to replace the ``repo`` field with the appropriate Git url, and update ``tag`` and ``folder`` to reflect the ``0.2`` version of the app we just committed. 
-
-Save and close the ``apps-repo.yaml`` file.
 
 Update Workflow Metadata
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -248,6 +217,20 @@ The metadata section should have the line:
 .. code-block:: yaml
 
     version: '0.2'
+
+Update Apps
+~~~~~~~~~~~
+
+Update the "Apps" section by incrementing the version:
+
+.. code-block:: yaml
+
+    apps:
+      hello-world:
+        git: https://github.com/[USERS]/hello-world-gf2.git
+        version: '0.2'
+
+Be sure to replace the "git" field with the correct Git repo to which you committed the "Hello World!" app.
 
 Define a Workflow Input
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -267,16 +250,16 @@ Update the ``inputs`` section of ``workflow.yaml`` so that the ``file`` input la
 Pass the Workflow Input to the App
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Update the ``steps`` section of ``workflow.yaml`` so that the step refers to the correct app version. Specifically, the ``app`` field should have the value ``apps/hello-world-gf-0.2/app.yaml``:
+The ``steps`` section of ``workflow.yaml`` should already be defined to take the correct workflow input:
 
 .. code-block:: yaml
 
     steps:
       hello:
-        app: apps/hello-world-gf-0.2/app.yaml
+        app: hello-world
         depend: []
         template:
-          file: '{workflow->file}'
+          file: ${workflow->file}
           output: output.txt
 
 Save and close the ``workflow.yaml`` file.
@@ -288,7 +271,7 @@ Update the ``README.rst`` file to reflect the new workflow input:
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-workflow-gf
+    cd ~/geneflow_work/hello-world-workflow-gf2
     vi ./README.rst
 
 Modify the file so it looks like the following:
@@ -319,7 +302,7 @@ Commit the new version of the workflow to the Git repo:
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-workflow-gf
+    cd ~/geneflow_work/hello-world-workflow-gf2
     git add -u
     git commit -m "updated hello world workflow"
     git tag 0.2
@@ -333,7 +316,7 @@ Now that the workflow has been updated and committed to a Git repo, we can insta
 .. code-block:: text
 
     cd ~/geneflow_work
-    geneflow install-workflow -g https://github.com/[USER]/hello-world-workflow-gf.git -c --make_apps ./test-workflow-0.2
+    geneflow install-workflow -g https://github.com/[USER]/hello-world-workflow-gf2.git -c --make_apps ./test-workflow-0.2
 
 This command installs the updated "Hello World!" one-step workflow, and its updated "Hello World!" app into the directory ``test-workflow-0.2``. Remember to replace the Git URL with the URL to which you committed the workflow.
 
@@ -341,7 +324,7 @@ Test the workflow to validate its functionality:
 
 .. code-block:: text
 
-    geneflow run -d output_uri=output -d inputs.file=./test-workflow-0.2/data/test.txt ./test-workflow-0.2
+    geneflow run ./test-workflow-2.0 -o output --in.file=./test-workflow-0.2/data/test.txt
 
 This command runs the workflow in the ``test-workflow-0.2`` directory using the test data and copies the output to the ``output`` directory.
 
@@ -360,6 +343,4 @@ Be sure to replace ``[JOB ID]`` with the ID of the GeneFlow job. The job ID is a
 Summary
 -------
 
-Congratulations! You updated the one-step GeneFlow workflow so that it can handle a basic input file. The next tutorial will expand on this workflow by using an app with piped execution. 
-
-
+Congratulations! You updated the one-step GeneFlow workflow so that it can handle a basic input file. The next tutorial will expand on this workflow by using an app with piped execution.
