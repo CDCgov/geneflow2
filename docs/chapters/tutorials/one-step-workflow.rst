@@ -43,9 +43,6 @@ You should see the workflow template directory structure (it may have some extra
 
 When creating a workflow, the "workflow.yaml" file must be modified. It is also recommended to edit the main "README.rst" file, and add test data to the "data" directory. 
 
-Configure the Apps Repo
------------------------
-
 Configure the Workflow
 ----------------------
 

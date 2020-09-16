@@ -12,18 +12,18 @@ Start by cloning the App Template.
 
 .. code-block:: text
 
-    git clone https://gitlab.com/geneflow/apps/app-template.git singularity-gf
+    git clone https://gitlab.com/geneflow/apps/app-template-gf2.git singularity-gf2
 
-This command downloads the app template into the "singularity-gf" directory. "singularity-gf" is also the name of the app you're creating in this tutorial.
+This command downloads the app template into the "singularity-gf2" directory. "singularity-gf2" is also the name of the app you're creating in this tutorial.
 
 Configure the App
 -----------------
 
-Configure the app by editing the "config.yaml" file. Feel free to use your favorite editor. The example here will use vi.
+Configure the app by editing the "app.yaml" file. Feel free to use your favorite editor. The example here will use vi.
 
 .. code-block:: text
 
-    vi ./singularity-gf/config.yaml
+    vi ./singularity-gf/app.yaml
 
 Metadata
 ~~~~~~~~
@@ -33,11 +33,11 @@ Start by changing the Metadata fields to be specific for your app. I include the
 .. code-block:: text
    
     # name: standard GeneFlow app name
-    name: singularity-gf
+    name: singularity-gf2
     # description: short description for the app
     description: execute docker image godlovedc/lolcow using geneflow app and singularity
-    # repo_uri: link to the app's git repo
-    repo_uri: https://gitlab.com/geneflow/apps/singularity-gf.git
+    # git: link to the app's git repo
+    git: https://gitlab.com/geneflow/apps/singularity-gf2.git
     # version: must be incremented every time this file, or any file in the app
     # project is modified
     version: '0.1'
@@ -67,13 +67,6 @@ We will keep the convention for inputs and parameters the same as the "hello wor
 App Execution Methods
 ---------------------
 
-We will keep the following fields unmodified because we want to use auto method detection and have no pre-execution commands:
-
-.. code-block:: text
-
-    default_exec_method: auto
-    pre_exec:
-
 We will modify the ``exec_methods:`` field significantly. The ultimate command we want to execute is 
 
 .. code-block:: text
@@ -93,7 +86,7 @@ Because we are using the same image, the second block keeps the same fields exce
     exec_methods:
     - name: singularity
       if:
-      - str_equal: ['${SINGULARITY}', 'yes']
+      - in_path: singularity
       exec:
       - pipe:
         - type: 'singularity'
@@ -106,8 +99,6 @@ Because we are using the same image, the second block keeps the same fields exce
           run: 'cowsay'
           stdout: ${OUTPUT_FULL}
 
-We also leave the ``post_exec:`` field empty because we have no post execution commands.
-
 "Make" the App
 --------------
 
@@ -115,14 +106,8 @@ Make this app using the GeneFlow ``make-app`` command:
 
 .. code-block:: text
 
-    cd singularity-gf
+    cd singularity-gf2
     geneflow make-app .
-
-Next, make the app wrapper script executable:
-
-.. code-block:: text
-
-    chmod +x ./assets/singularity-gf.sh
 
 Test the App
 ------------
@@ -172,7 +157,7 @@ Fill in the pertinent information:
 
 .. code-block:: text
 
-    singularity-gf
+    singularity-gf2
     =====
     
     Version: 0.1
@@ -192,7 +177,7 @@ Fill in the pertinent information:
 Upload your app
 ---------------
 
-Upload the app to your favorite repo service. Create a new project called "singularity-gf". Commit and upload using the following commands, except change the url to your revelant repo service and name.
+Upload the app to your favorite repo service. Create a new project called "singularity-gf2". Commit and upload using the following commands, except change the url to your revelant repo service and name.
 
 .. code-block:: text
 
@@ -201,7 +186,7 @@ Upload the app to your favorite repo service. Create a new project called "singu
     git add .
     git commit -m "1st commit build"
     git tag 0.1
-    git remote add origin https://gitlab.com/[YOUR NAME]/singularity-gf.git
+    git remote add origin https://gitlab.com/[YOUR NAME]/singularity-gf2.git
     git push -u origin master
     git push origin 0.1
 
@@ -209,4 +194,3 @@ Summary
 -------
 
 Congratulations! You have created a GeneFlow app that uses singularity and pipes commands, tested it using the auto-generated test script, and committed it to a git repo.
-
