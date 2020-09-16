@@ -244,12 +244,6 @@ GeneFlow will then generate three files:
     2019-05-31 00:21:43 INFO [app_installer.py:325:make_wrapper()] compiling /home/[user]/geneflow_work/hello-world-gf/assets/hello-world-gf2.sh
     2019-05-31 00:21:43 INFO [app_installer.py:357:make_test()] compiling /home/[user]/geneflow_work/hello-world-gf/test/test.sh
 
-Finally, make the app wrapper script executable:
-
-.. code-block:: text
-
-    chmod +x ./assets/hello-world-gf2.sh
-
 Test the App
 ------------
 

@@ -13,13 +13,13 @@ Clone the previous "Hello World!" app from the Git repo (be sure to replace the 
 .. code-block:: text
 
     cd ~/geneflow_work
-    git clone https://github.com/[USER]/hello-world-gf.git
+    git clone https://github.com/[USER]/hello-world-gf2.git
 
-Note: if the ``hello-world-gf`` directory still exists with the contents of the previous app tutorial, do a ``git pull`` instead:
+Note: if the ``hello-world-gf2`` directory still exists with the contents of the previous app tutorial, do a ``git pull`` instead:
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-gf
+    cd ~/geneflow_work/hello-world-gf2
     git pull
 
 Update App Metadata
@@ -29,9 +29,9 @@ Update the app metadata to reflect the new functionality:
 
 .. code-block:: text
 
-    vi ./config.yaml
+    vi ./app.yaml
 
-Change the ``description`` field to indicate a change in the app; leave the ``repo_uri`` field as is (e.g., with [USER] replaced with your username, and github.com replaced with the appropriate Git service); update the ``version`` field to ``0.4``:
+Change the ``description`` field to indicate a change in the app; leave the ``git`` field as is (e.g., with [USER] replaced with your username, and github.com replaced with the appropriate Git service); update the ``version`` field to ``0.4``:
 
 .. code-block:: yaml
 
@@ -41,8 +41,8 @@ Change the ``description`` field to indicate a change in the app; leave the ``re
     name: hello-world-gf
     # description: short description for the app
     description: Updated hello world GeneFlow app demonstrating conditional execution
-    # repo_uri: link to the app's git repo
-    repo_uri: https://github.com/[USER]/hello-world-gf.git
+    # git: link to the app's git repo
+    git: https://github.com/[USER]/hello-world-gf2.git
     # version: must be incremented every time this file, or any file in the app
     # project is modified
     version: '0.4'
@@ -98,21 +98,14 @@ The modified ``exec_methods`` block first checks if three command-line utilities
 Re-"Make" the App
 ~~~~~~~~~~~~~~~~~
 
-Now that the ``config.yaml`` file has been updated with the new conditional execution block and a new parameter has been added, rebuild the app with the following commands:
+Now that the ``app.yaml`` file has been updated with the new conditional execution block and a new parameter has been added, rebuild the app with the following commands:
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-gf
+    cd ~/geneflow_work/hello-world-gf2
     geneflow make-app .
 
-This should re-generate the ``app.yaml.j2``, ``agave-app-def.json.j2``, ``hello-world-gf.sh``, and ``test.sh`` scripts. 
-
-Make sure the app wrapper script and test script are executable:
-
-.. code-block:: text
-
-    chmod +x ./assets/hello-world-gf.sh
-    chmod +x ./test/test.sh
+This should re-generate the ``agave-app-def.json.j2``, ``hello-world-gf2.sh``, and ``test.sh`` scripts. 
 
 Test the App
 ~~~~~~~~~~~~
@@ -121,7 +114,7 @@ Run the ``test.sh`` script to test the app. Note: this test uses the same test i
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-gf/test
+    cd ~/geneflow_work/hello-world-gf2/test
     ./test.sh
 
 You should see output similar to the following:
@@ -159,7 +152,7 @@ Update the app ``README.rst`` file to reflect changes to the app:
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-gf
+    cd ~/geneflow_work/hello-world-gf2
     vi ./README.rst
 
 Modify the file so it looks like the following:
@@ -192,7 +185,7 @@ Finally, commit the updated app to the Git repo and update its tag to reflect th
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-gf
+    cd ~/geneflow_work/hello-world-gf2
     git add -u
     git commit -m "update hello world app with conditional execution"
     git tag 0.4
@@ -208,38 +201,14 @@ Checkout the previous "Hello World!" workflow:
 .. code-block:: text
 
     cd ~/geneflow_work
-    git clone https://github.com/[USER]/hello-world-workflow-gf.git
+    git clone https://github.com/[USER]/hello-world-workflow-gf2.git
 
-Note: if the ``hello-world-workflow-gf`` directory still exists with the contents of the previous workflow tutorial, do a ``git pull`` instead:
+Note: if the ``hello-world-workflow-gf2`` directory still exists with the contents of the previous workflow tutorial, do a ``git pull`` instead:
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-workflow-gf
+    cd ~/geneflow_work/hello-world-workflow-gf2
     git pull
-
-Update the App Repo
-~~~~~~~~~~~~~~~~~~~
-
-Update the ``apps-repo.yaml`` file so that the ``hello-world`` app item points to the latest "Hello World!" app repo. Open the file with:
-
-.. code-block:: text
-
-    cd ~/geneflow_work/hello-world-workflow-gf/workflow
-    vi ./apps-repo.yaml
-
-And modify the file so that it contains a single app item similar to:
-
-.. code-block:: text
-
-    - name: hello-world
-      repo: https://github.com/[USER]/hello-world-gf.git
-      tag: '0.4'
-      folder: hello-world-gf-0.4
-      asset: none
-
-Be sure to replace the ``repo`` field with the appropriate Git url, and update ``tag`` and ``folder`` to reflect the ``0.4`` version of the app we just committed. 
-
-Save and close the ``apps-repo.yaml`` file.
 
 Update Workflow Metadata
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -255,6 +224,20 @@ The metadata section should have the line:
 .. code-block:: yaml
 
     version: '0.4'
+
+Update Apps
+~~~~~~~~~~~
+
+Update the "Apps" section by incrementing the version:
+
+.. code-block:: yaml
+
+    apps:
+      hello-world:
+        git: https://github.com/[USER]/hello-world-gf2.git
+        version: '0.4'
+
+Be sure to replace the "git" field with the correct Git repo to which you committed the "Hello World!" app.
 
 Add a Workflow Parameter
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -277,17 +260,17 @@ This parameter will be passed on to the new app in the ``steps`` section.
 Update Workflow Steps
 ~~~~~~~~~~~~~~~~~~~~~
 
-Update the ``steps`` section so that the ``hello`` step refers to the latest app version (i.e., 0.4), and passes the new ``mode`` parameter to the app:
+Update the ``steps`` section so that the ``hello`` step passes the new ``mode`` parameter to the app:
 
 .. code-block:: yaml
 
     steps:
        hello:
-         app: apps/hello-world-gf-0.4/app.yaml
+         app: hello-world
          depend: []
          template:
-           file: '{workflow->file}'
-           mode: '{workflow->mode}'
+           file: ${workflow->file}
+           mode: ${workflow->mode}
            output: output.txt
 
 Update the Workflow README
@@ -297,7 +280,7 @@ Update the ``README.rst`` file to reflect the new functionality:
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-workflow-gf
+    cd ~/geneflow_work/hello-world-workflow-gf2
     vi ./README.rst
 
 Modify the file so it looks like the following:
@@ -328,7 +311,7 @@ Commit the new version of the workflow to the Git repo:
 
 .. code-block:: text
 
-    cd ~/geneflow_work/hello-world-workflow-gf
+    cd ~/geneflow_work/hello-world-workflow-gf2
     git add -u
     git commit -m "updated hello world workflow"
     git tag 0.4
@@ -342,7 +325,7 @@ Now that the workflow has been updated and committed to a Git repo, we can insta
 .. code-block:: text
 
     cd ~/geneflow_work
-    geneflow install-workflow -g https://github.com/[USER]/hello-world-workflow-gf.git -c --make_apps ./test-workflow-0.4
+    geneflow install-workflow -g https://github.com/[USER]/hello-world-workflow-gf2.git -c --make_apps ./test-workflow-0.4
 
 This command installs the updated "Hello World!" one-step workflow, and its updated "Hello World!" app into the directory ``test-workflow-0.4``. Remember to replace the Git URL with the URL to which you committed the workflow.
 
@@ -350,7 +333,7 @@ Test the workflow to validate its functionality:
 
 .. code-block:: text
 
-    geneflow run -d output_uri=output -d inputs.file=./test-workflow-0.4/data/test.txt -d parameters.mode=basic ./test-workflow-0.4
+    geneflow run ./test-workflow-0.4 -o output --in.file=./test-workflow-0.4/data/test.txt --param.mode=basic
 
 This command runs the workflow in the ``test-workflow-0.4`` directory using the test data, ``mode`` of "basic", and copies the output to the ``output`` directory.
 
@@ -370,7 +353,7 @@ Next, test the workflow with an alternate mode (i.e., other than "basic"):
 
 .. code-block:: text
 
-    geneflow run -d output_uri=output -d inputs.file=./test-workflow-0.4/data/test.txt -d parameters.mode=advanced ./test-workflow-0.4
+    geneflow run ./test-workflow-0.4 -o output --in.file=./test-workflow-0.4/data/test.txt --param.mode=advanced
 
 This command runs the workflow in the ``test-workflow-0.4`` directory using the test data, ``mode`` of "advanced", and copies the output to the ``output`` directory.
 
@@ -389,5 +372,4 @@ Be sure to replace ``[JOB ID]`` with the ID of the GeneFlow job. You should see 
 Summary
 -------
 
-Congratulations! You updated the one-step GeneFlow workflow so that it demonstrates conditional execution in the app. The next tutorial will expand on this workflow by adding more steps.  
-
+Congratulations! You updated the one-step GeneFlow workflow so that it demonstrates conditional execution in the app. The next tutorial will expand on this workflow by adding more steps.
