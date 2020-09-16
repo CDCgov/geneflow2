@@ -1,5 +1,16 @@
 # Changelog
 
+## 2020/09/16 - v2.0.0: bug fix release
+
+1. Fix bug: remove DirChooser widget from --work argument for Gooey
+
+
+## 2020/08/19 - v2.0.0-beta.2: bug fix release
+
+1. Fix bug: initialization of context URIs fails when job work URI not set for context.
+
+2. Fix bug: wrapper script variable assignments not properly quoted.
+
 
 ## 2020/08/19 - v2.0.0-beta.2: bug fix release
 

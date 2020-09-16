@@ -352,8 +352,7 @@ def run(args, other_args, subparser):
                 nargs='+',
                 type=str,
                 default=[],
-                help='Work Directory',
-                widget='DirChooser'
+                help='Work Directory'
             )
             exec_group = dynamic_parser.add_argument_group(
                 "Execution Options",
