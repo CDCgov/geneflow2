@@ -394,11 +394,19 @@ class GridengineStep(WorkflowStep):
         # check if jobs are running, finished, or failed
         for map_item in self._map:
             if map_item['status'] != 'FINISHED' and map_item['status'] != 'FAILED':
-                # can only get job status if it has not already been disposed with "wait"
-                status = self._gridengine['drmaa_session'].jobStatus(
-                    map_item['run'][map_item['attempt']]['hpc_job_id']
-                )
-                map_item['status'] = self._job_status_map[status]
+
+                try:
+                    # can only get job status if it has not already been disposed with "wait"
+                    status = self._gridengine['drmaa_session'].jobStatus(
+                        map_item['run'][map_item['attempt']]['hpc_job_id']
+                    )
+                    map_item['status'] = self._job_status_map[status]
+
+                except drmaa.DrmCommunicationException as err:
+                    msg = 'cannot get job status for step "{}" [{}]'\
+                            .format(self._step['name'], str(err))
+                    Log.a().warning(msg)
+                    map_item['status'] = 'UNKNOWN'
 
                 if map_item['status'] == 'FINISHED' or map_item['status'] == 'FAILED':
                     # check exit status
