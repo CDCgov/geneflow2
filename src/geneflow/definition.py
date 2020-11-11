@@ -114,9 +114,11 @@ WORKFLOW_SCHEMA = {
                     'letter': {'type': 'string', 'default': ''},
                     'map': {
                         'type': 'dict',
-                        'default': {'uri': '', 'regex': ''},
+                        'default': {'uri': '', 'regex': '', 'glob': '*', 'recursive': False},
                         'schema': {
                             'uri': {'type': 'string', 'default': ''},
+                            'glob': {'type': 'string', 'default': '*'},
+                            'recursive': {'type': 'boolean', 'default': False},
                             'regex': {'type': 'string', 'default': ''}
                         }
                     },

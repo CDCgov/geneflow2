@@ -16,7 +16,7 @@ class DataManager:
     """
 
     @classmethod
-    def list(cls, uri=None, parsed_uri=None, **kwargs):
+    def list(cls, uri=None, parsed_uri=None, globstr='*', recursive=False, **kwargs):
         """
         List data in various contexts.
 
@@ -48,7 +48,7 @@ class DataManager:
             Log.an().error('_list_%s method not defined', parsed_uri['scheme'])
             return False
 
-        return list_func(parsed_uri, **kwargs)
+        return list_func(parsed_uri, globstr, recursive, **kwargs)
 
 
     @classmethod

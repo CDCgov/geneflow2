@@ -240,7 +240,7 @@ class AgaveWrapper:
 
 
     @AgaveRetry('files_list')
-    def files_list(self, system_id, file_path):
+    def files_list(self, system_id, file_path, recursive=False):
         """
         Wrap AgavePy file listing command.
 
@@ -263,6 +263,17 @@ class AgaveWrapper:
                 limit=1000000
             ) if f.name[:1] != '.' # skip files that start with .
         ]
+
+        files_subdirs = {}
+        if recursive:
+            for f in files:
+                if f.type == 'dir':
+                    files_subdirs[f.name] = self.files_list(
+                        system_id,
+                        file_path+'/'+f.name,
+                        recursive
+                    )
+            # append all items in files_subdirs to files
 
         return files
 

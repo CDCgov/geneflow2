@@ -13,7 +13,7 @@ from geneflow.extend.agave_wrapper import AgaveWrapper
 
 ### Local data management functions and move/copy with Local as source
 
-def _list_local(uri, local=None):
+def _list_local(uri, globstr, recursive, local=None):
     """
     List contents of local URI.
 
@@ -26,10 +26,11 @@ def _list_local(uri, local=None):
         On failure: False.
 
     """
+    prefix_length = len(uri['chopped_path'])+1
     try:
         file_list = [
-            os.path.basename(item) for item in glob.glob(
-                uri['chopped_path']+'/*'
+            item[prefix_length:] for item in glob.glob(
+                uri['chopped_path']+'/'+globstr, recursive=recursive
             )
         ]
 
