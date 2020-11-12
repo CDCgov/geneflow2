@@ -4,6 +4,7 @@ import itertools
 import os
 import time
 import urllib.parse
+import pprint
 
 try:
     from agavepy.agave import Agave
@@ -271,10 +272,10 @@ class AgaveWrapper:
         files_subdirs = {}
         if depth > 1 or depth == -1:
             for f in files:
-                if f.type == 'dir':
-                    files_subdirs[f.name] = self.files_list(
+                if f['type'] == 'dir':
+                    files_subdirs[f['name']] = self.files_list(
                         system_id,
-                        file_path+'/'+f.name,
+                        file_path+'/'+f['name'],
                         depth-1
                     )
 
