@@ -4,7 +4,6 @@ import itertools
 import os
 import time
 import urllib.parse
-import pprint
 
 try:
     from agavepy.agave import Agave
