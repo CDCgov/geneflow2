@@ -2,6 +2,7 @@
 This module contains data management extension functions for various contexts.
 """
 
+import fnmatch
 import glob
 import os
 import shutil
@@ -13,7 +14,7 @@ from geneflow.extend.agave_wrapper import AgaveWrapper
 
 ### Local data management functions and move/copy with Local as source
 
-def _list_local(uri, globstr, recursive, local=None):
+def _list_local(uri, globstr, local=None):
     """
     List contents of local URI.
 
@@ -27,6 +28,7 @@ def _list_local(uri, globstr, recursive, local=None):
 
     """
     prefix_length = len(uri['chopped_path'])+1
+    recursive = True if '**' in globstr else False
     try:
         file_list = [
             item[prefix_length:] for item in glob.glob(
@@ -190,7 +192,7 @@ def _move_local_local(src_uri, dest_uri, local=None):
 
 ### Agave data management functions and move/copy with Agave as source
 
-def _list_agave(uri, agave):
+def _list_agave(uri, globstr, agave):
     """
     List contents of agave URI.
 
@@ -204,7 +206,16 @@ def _list_agave(uri, agave):
         On failure: False.
 
     """
-    file_list = agave['agave_wrapper'].files_list(uri['authority'], uri['chopped_path'])
+    # recurse to depth based on glob
+    depth = -1 if '**' in globstr else 1
+    if depth == 1:
+        depth = globstr.count('/')+1
+
+    file_list = agave['agave_wrapper'].files_list(
+        uri['authority'],
+        uri['chopped_path'],
+        depth=depth
+    )
 
     if file_list is False:
         Log.an().error(
@@ -212,7 +223,14 @@ def _list_agave(uri, agave):
         )
         return False
 
-    return [file['name'] for file in file_list]
+    # apply glob pattern to filter file list
+    path_len = len(uri['chopped_path'])+1
+    globbed_file_list = fnmatch.filter(
+        [str(f['path']+'/'+f['name'])[path_len:] for f in file_list],
+        globstr
+    )
+
+    return globbed_file_list
 
 
 def _exists_agave(uri, agave):

@@ -92,7 +92,6 @@ class StepEntity(Base):
     app_id = Column(String)
     map_uri = Column(String, default='')
     map_glob = Column(String, default='*')
-    map_recursive = Column(Boolean, default=False)
     map_regex = Column(String, default='')
     template = Column(Text, default='')
     exec_context = Column(String, default='local')
@@ -368,7 +367,6 @@ class DataSource:
                 StepEntity.letter,
                 StepEntity.map_uri,
                 StepEntity.map_glob,
-                StepEntity.map_recursive,
                 StepEntity.map_regex,
                 StepEntity.template,
                 StepEntity.exec_context,
@@ -390,14 +388,13 @@ class DataSource:
                     'map': {
                         'uri': row[6],
                         'glob': row[7],
-                        'recursive': row[8],
-                        'regex': row[9],
+                        'regex': row[8],
                     },
-                    'template': json.loads(row[10]),
+                    'template': json.loads(row[9]),
                     'execution': {
-                        'context': row[11],
-                        'method': row[12],
-                        'parameters': json.loads(row[13])
+                        'context': row[10],
+                        'method': row[11],
+                        'parameters': json.loads(row[12])
                     },
                     'depend': []
                 } for row in result
@@ -1112,7 +1109,6 @@ class DataSource:
                 letter=data['letter'],
                 map_uri=data['map_uri'],
                 map_glob=data['map_glob'],
-                map_recursive=data['map_recursive'],
                 map_regex=data['map_regex'],
                 template=data['template'],
                 exec_context=data['exec_context'],
@@ -2025,7 +2021,6 @@ class DataSource:
                 'letter': step['letter'],
                 'map_uri': step['map']['uri'],
                 'map_glob': step['map']['glob'],
-                'map_recursive': step['map']['recursive'],
                 'map_regex': step['map']['regex'],
                 'template': json.dumps(step['template']),
                 'exec_context': step['execution']['context'],
@@ -2082,7 +2077,6 @@ class DataSource:
                         'letter': step['letter'],
                         'map_uri': step['map']['uri'],
                         'map_glob': step['map']['glob'],
-                        'map_recursive': step['map']['recursive'],
                         'map_regex': step['map']['regex'],
                         'template': json.dumps(step['template']),
                         'exec_context': step['execution']['context'],

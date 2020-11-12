@@ -207,6 +207,7 @@ class AgaveStep(WorkflowStep):
         # list files from URI
         file_list = DataManager.list(
             parsed_uri=self._parsed_map_uri,
+            globstr=self._step['map']['glob'],
             agave=self._agave
         )
         if file_list is False:

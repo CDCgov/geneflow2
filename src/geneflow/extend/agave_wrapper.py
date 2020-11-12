@@ -1,5 +1,6 @@
 """This module contains the GeneFlow AgaveWrapper class."""
 
+import itertools
 import os
 import time
 import urllib.parse
@@ -240,7 +241,7 @@ class AgaveWrapper:
 
 
     @AgaveRetry('files_list')
-    def files_list(self, system_id, file_path, recursive=False):
+    def files_list(self, system_id, file_path, depth=1):
         """
         Wrap AgavePy file listing command.
 
@@ -255,6 +256,7 @@ class AgaveWrapper:
         """
         files = [
             {
+                'path': file_path,
                 'name': f.name,
                 'type': f.type
             } for f in self._agave.files.list(
@@ -264,18 +266,20 @@ class AgaveWrapper:
             ) if f.name[:1] != '.' # skip files that start with .
         ]
 
+        # list all subdirectories if not at max depth
+        # depth of -1 means unlimited depth
         files_subdirs = {}
-        if recursive:
+        if depth > 1 or depth == -1:
             for f in files:
                 if f.type == 'dir':
                     files_subdirs[f.name] = self.files_list(
                         system_id,
                         file_path+'/'+f.name,
-                        recursive
+                        depth-1
                     )
-            # append all items in files_subdirs to files
 
-        return files
+        # append all items in files_subdirs to files
+        return files + list(itertools.chain(*files_subdirs.values()))
 
 
     def _recursive_download(self, system_id, file_path, target_path, depth):

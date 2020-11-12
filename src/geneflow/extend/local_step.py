@@ -176,8 +176,7 @@ class LocalStep(WorkflowStep):
         # get file list from URI
         file_list = DataManager.list(
             parsed_uri=self._parsed_map_uri,
-            globstr=self._map['glob'],
-            recursive=self._map['recursive']
+            globstr=self._step['map']['glob']
         )
         if file_list is False:
             msg = 'cannot get contents of map uri: {}'\
