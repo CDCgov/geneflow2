@@ -5,9 +5,9 @@
 
 1. Fix bug: catch DRMAA communication exception for long running jobs.
 
-2. Fix bug: set default values parameters in Agave job template and change some parameters to not required.
+2. Fix bug: set default values of parameters in Agave job template and change some parameters to not required.
 
-3. Add globbing and recursion to map functionality in steps.
+3. Major enhancement: add globbing and recursion to map functionality in steps.
 
 
 ## 2020/09/16 - v2.0.0: enhancement and bug fix release
