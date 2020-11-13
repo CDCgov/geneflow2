@@ -67,6 +67,7 @@ CREATE TABLE step (
     workflow_id CHAR(32) NOT NULL,
     app_id CHAR(32) NOT NULL,
     map_uri VARCHAR(256) NOT NULL DEFAULT '',
+    map_glob VARCHAR(256) NOT NULL DEFAULT '*',
     map_regex VARCHAR(256) NOT NULL DEFAULT '',
     template TEXT NOT NULL DEFAULT '',
     exec_context VARCHAR(256) NOT NULL DEFAULT 'local',
