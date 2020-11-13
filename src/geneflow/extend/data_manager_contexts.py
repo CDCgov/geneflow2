@@ -2,10 +2,9 @@
 This module contains data management extension functions for various contexts.
 """
 
-import fnmatch
-import glob
 import os
 import shutil
+from wcmatch import glob
 
 from geneflow.log import Log
 from geneflow.uri_parser import URIParser
@@ -28,11 +27,12 @@ def _list_local(uri, globstr, local=None):
 
     """
     prefix_length = len(uri['chopped_path'])+1
-    recursive = True if '**' in globstr else False
+    #recursive = True if '**' in globstr else False
     try:
         file_list = [
             item[prefix_length:] for item in glob.glob(
-                uri['chopped_path']+'/'+globstr, recursive=recursive
+                uri['chopped_path']+'/'+globstr,
+                flags=glob.EXTGLOB|glob.GLOBSTAR
             )
         ]
 
@@ -225,9 +225,10 @@ def _list_agave(uri, globstr, agave):
 
     # apply glob pattern to filter file list
     path_len = len(uri['chopped_path'])+1
-    globbed_file_list = fnmatch.filter(
+    globbed_file_list = glob.globfilter(
         [str(f['path']+'/'+f['name'])[path_len:] for f in file_list],
-        globstr
+        globstr,
+        flags=glob.EXTGLOB|glob.GLOBSTAR
     )
 
     return globbed_file_list
