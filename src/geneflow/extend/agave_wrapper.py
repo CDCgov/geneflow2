@@ -275,7 +275,7 @@ class AgaveWrapper:
                     files_subdirs[f['name']] = self.files_list(
                         system_id,
                         file_path+'/'+f['name'],
-                        depth-1
+                        depth-1 if depth > 1 else depth
                     )
 
         # append all items in files_subdirs to files
