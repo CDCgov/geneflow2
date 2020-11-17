@@ -16,6 +16,8 @@
 
 2. Update documentation and tutorials to reflect all v2.0 changes.
 
+2. Update documentation and tutorials to reflect all v2.0 changes
+
 
 ## 2020/08/19 - v2.0.0-beta.2: bug fix release
 
