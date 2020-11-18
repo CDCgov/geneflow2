@@ -23,6 +23,11 @@ class Contexts:
             'data': False,
             'data_scheme': 'local'
         },
+        'slurm': {
+            'exec': True,
+            'data': False,
+            'data_scheme': 'local'
+        },
         'tapis': {
             'alias': 'agave'
         }

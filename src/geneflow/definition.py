@@ -135,7 +135,7 @@ WORKFLOW_SCHEMA = {
                             'context': {
                                 'type': 'string',
                                 'default': 'local',
-                                'allowed': ['local', 'agave', 'gridengine']
+                                'allowed': ['local', 'agave', 'tapis', 'gridengine', 'slurm']
                             },
                             'method': {
                                 'type': 'string',
@@ -300,7 +300,7 @@ JOB_SCHEMA = {
                     'valueschema': {
                         'type': 'string',
                         'default': 'local',
-                        'allowed': ['local', 'agave', 'tapis', 'gridengine']
+                        'allowed': ['local', 'agave', 'tapis', 'gridengine', 'slurm']
                     }
                 },
                 'method': {
