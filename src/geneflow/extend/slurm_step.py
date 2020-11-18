@@ -304,13 +304,13 @@ class SlurmStep(WorkflowStep):
         jt.outputPath = ':{}.out'.format(log_path)
 
         # pass execution parameters to job template
-        native_spec = ' -N 1'
+        native_spec = ' --nodes=1 --ntasks=1'
         if 'queue' in self._step['execution']['parameters']:
             native_spec += ' -p {}'.format(
                 self._step['execution']['parameters']['queue']
             )
         if 'slots' in self._step['execution']['parameters']:
-            native_spec += ' --cpus-per-task {}'.format(
+            native_spec += ' --cpus-per-task={}'.format(
                 self._step['execution']['parameters']['slots']
             )
         if 'other' in self._step['execution']['parameters']:
@@ -320,7 +320,13 @@ class SlurmStep(WorkflowStep):
         jt.nativeSpecification = native_spec
 
         # submit hpc job using drmaa library
-        job_id = self._slurm['drmaa_session'].runJob(jt)
+        try:
+            job_id = self._slurm['drmaa_session'].runJob(jt)
+        except drmaa.errors.DrmaaException as err:
+            msg = 'DRMAA exception: [{}]'.format(str(err))
+            Log.an().error(msg)
+            return self._fatal(msg)
+
         self._slurm['drmaa_session'].deleteJobTemplate(jt)
 
         Log.a().debug(

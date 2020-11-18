@@ -26,6 +26,10 @@ class SlurmWorkflow:
 
         # drmaa library for grid engine
         self._drmaa_session = drmaa.Session()
+        Log.some().debug('DRMAA contact strings: {}'.format(self._drmaa_session.contact))
+        Log.some().debug('DRMAA systems: {}'.format(self._drmaa_session.drmsInfo))
+        Log.some().debug('DRMAA implementations: {}'.format(self._drmaa_session.drmaaImplementation))
+        Log.some().debug('DRMAA version: {}'.format(self._drmaa_session.version))
 
 
     def __del__(self):

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2020/11/30 - v2.2.0: major enhancement release
+
+1. Major enhancement: add support for running workflows with SLURM HPC scheduler
+
 
 ## 2020/11/18 - v2.1.0: enhancement and bug fix release
 
