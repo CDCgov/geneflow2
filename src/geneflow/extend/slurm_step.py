@@ -300,8 +300,8 @@ class SlurmStep(WorkflowStep):
         jt.remoteCommand = '/bin/bash'
         jt.args = args
         jt.jobName = name
-        jt.errorPath = '{}.err'.format(log_path)
-        jt.outputPath = '{}.out'.format(log_path)
+        jt.errorPath = ':{}.err'.format(log_path)
+        jt.outputPath = ':{}.out'.format(log_path)
 
         # pass execution parameters to job template
         native_spec = ' -N 1'
