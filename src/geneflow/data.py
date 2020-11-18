@@ -91,6 +91,7 @@ class StepEntity(Base):
     workflow_id = Column(String)
     app_id = Column(String)
     map_uri = Column(String, default='')
+    map_glob = Column(String, default='*')
     map_regex = Column(String, default='')
     template = Column(Text, default='')
     exec_context = Column(String, default='local')
@@ -365,6 +366,7 @@ class DataSource:
                 StepEntity.number,
                 StepEntity.letter,
                 StepEntity.map_uri,
+                StepEntity.map_glob,
                 StepEntity.map_regex,
                 StepEntity.template,
                 StepEntity.exec_context,
@@ -385,13 +387,14 @@ class DataSource:
                     'letter': row[5],
                     'map': {
                         'uri': row[6],
-                        'regex': row[7],
+                        'glob': row[7],
+                        'regex': row[8],
                     },
-                    'template': json.loads(row[8]),
+                    'template': json.loads(row[9]),
                     'execution': {
-                        'context': row[9],
-                        'method': row[10],
-                        'parameters': json.loads(row[11])
+                        'context': row[10],
+                        'method': row[11],
+                        'parameters': json.loads(row[12])
                     },
                     'depend': []
                 } for row in result
@@ -1105,6 +1108,7 @@ class DataSource:
                 number=data['number'],
                 letter=data['letter'],
                 map_uri=data['map_uri'],
+                map_glob=data['map_glob'],
                 map_regex=data['map_regex'],
                 template=data['template'],
                 exec_context=data['exec_context'],
@@ -2016,6 +2020,7 @@ class DataSource:
                 'number': step['number'],
                 'letter': step['letter'],
                 'map_uri': step['map']['uri'],
+                'map_glob': step['map']['glob'],
                 'map_regex': step['map']['regex'],
                 'template': json.dumps(step['template']),
                 'exec_context': step['execution']['context'],
@@ -2071,6 +2076,7 @@ class DataSource:
                         'number': step['number'],
                         'letter': step['letter'],
                         'map_uri': step['map']['uri'],
+                        'map_glob': step['map']['glob'],
                         'map_regex': step['map']['regex'],
                         'template': json.dumps(step['template']),
                         'exec_context': step['execution']['context'],
