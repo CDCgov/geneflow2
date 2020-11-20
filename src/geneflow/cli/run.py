@@ -89,36 +89,13 @@ def set_dict_key_list(dict_obj, keys, val):
 
 def apply_job_modifiers(jobs_dict, job_mods):
     """Update the jobs_dict with the given modifiers."""
-    for mod in job_mods:
-        # split at =
-        try:
-            parts = mod.split('=')
-        except ValueError as err:
-            Log.a().warning('job mod "%s" is malformed [%s]', mod, str(err))
-            continue # skip mod
-
-        key = parts[0]
-        if not key:
-            Log.a().warning('empty job mod')
-            continue # skip mod
-
-        val = None
-        if len(parts) == 1:
-            # only one key, treat as bool switch
-            val = True
-        elif len(parts) == 2:
-            # two parts, key & value
-            val = parts[1]
-        else:
-            # multiple '=', include '=' in value
-            val = '='.join(parts[1:])
-
+    for key in job_mods:
         # split key at .
         keys = key.split('.')
 
         # apply to all jobs
         for job in jobs_dict.values():
-            set_dict_key_list(job, keys, val)
+            set_dict_key_list(job, keys, job_mods[key])
 
 
 def run(args, other_args, subparser):
@@ -217,9 +194,11 @@ def run(args, other_args, subparser):
         for input_key in workflow_dict['inputs']:
             dynamic_parser.add_argument(
                 '--in.{}'.format(input_key),
+                nargs='+',
+                type=str,
                 dest='inputs.{}'.format(input_key),
                 required=False,
-                default=workflow_dict['inputs'][input_key]['default'],
+                default=workflow_dict['inputs'][input_key]['default'] if isinstance(workflow_dict['inputs'][input_key]['default'], list) else [workflow_dict['inputs'][input_key]['default']],
                 help=workflow_dict['inputs'][input_key]['label']
             )
         for param_key in workflow_dict['parameters']:
@@ -312,9 +291,11 @@ def run(args, other_args, subparser):
                     widget = 'DirChooser'
                 input_group.add_argument(
                     '--in.{}'.format(input_key),
+                    nargs='+',
+                    type=str,
                     dest='inputs.{}'.format(input_key),
                     required=False,
-                    default=workflow_dict['inputs'][input_key]['default'],
+                    default=workflow_dict['inputs'][input_key]['default'] if isinstance(workflow_dict['inputs'][input_key]['default'], list) else [workflow_dict['inputs'][input_key]['default']],
                     help=workflow_dict['inputs'][input_key]['label'],
                     widget=widget
                 )
@@ -421,10 +402,10 @@ def run(args, other_args, subparser):
     # override with known cli parameters
     apply_job_modifiers(
         jobs_dict,
-        [
-            'name={}'.format(dynamic_args.name),
-            'output_uri={}'.format(dynamic_args.output)
-        ]
+        {
+            'name': dynamic_args.name,
+            'output_uri': dynamic_args.output
+        }
     )
 
     # insert workflow name into job, if not provided
@@ -436,11 +417,11 @@ def run(args, other_args, subparser):
     # add inputs and parameters to job definition
     apply_job_modifiers(
         jobs_dict,
-        [
-            '{}={}'.format(dynamic_arg, getattr(dynamic_args, dynamic_arg))
+        {
+            dynamic_arg: getattr(dynamic_args, dynamic_arg)
             for dynamic_arg in vars(dynamic_args) \
                 if dynamic_arg.startswith('inputs.') or dynamic_arg.startswith('parameters.')
-        ]
+        }
     )
 
     # add work URIs to job definition
@@ -455,25 +436,29 @@ def run(args, other_args, subparser):
 
     apply_job_modifiers(
         jobs_dict,
-        [
-            'work_uri.{}={}'.format(context, work_uris[context])
+        {
+            'work_uri.{}'.format(context): work_uris[context]
             for context in work_uris
-        ]
+        }
     )
 
     # add execution options to job definition
+    ec_dict = {}
+    for exec_arg in dynamic_args.exec_context:
+        parts = exec_arg.split(':', 1)[0:2]
+        ec_dict['execution.context.{}'.format(parts[0])] = parts[1]
+    em_dict = {}
+    for exec_arg in dynamic_args.exec_method:
+        parts = exec_arg.split(':', 1)[0:2]
+        em_dict['execution.method.{}'.format(parts[0])] = parts[1]
+    ep_dict = {}
+    for exec_arg in dynamic_args.exec_param:
+        parts = exec_arg.split(':', 1)[0:2]
+        ep_dict['execution.parameters.{}'.format(parts[0])] = parts[1]
+
     apply_job_modifiers(
         jobs_dict,
-        [
-            'execution.context.{}={}'.format(*exec_arg.split(':', 1)[0:2])
-            for exec_arg in dynamic_args.exec_context
-        ]+[
-            'execution.method.{}={}'.format(*exec_arg.split(':', 1)[0:2])
-            for exec_arg in dynamic_args.exec_method
-        ]+[
-            'execution.parameters.{}={}'.format(*exec_arg.split(':', 1)[0:2])
-            for exec_arg in dynamic_args.exec_param
-        ]
+        dict(chain(ec_dict.items(), em_dict.items(), ep_dict.items()))
     )
 
     # get default values from workflow definition
@@ -485,7 +470,7 @@ def run(args, other_args, subparser):
         for input_key in workflow_dict['inputs']:
             if input_key not in job['inputs']:
                 job['inputs'][input_key]\
-                    = workflow_dict['inputs'][input_key]['default']
+                    = workflow_dict['inputs'][input_key]['default'] if isinstance(workflow_dict['inputs'][input_key]['default'], list) else [workflow_dict['inputs'][input_key]['default']]
         for param_key in workflow_dict['parameters']:
             if param_key not in job['parameters']:
                 job['parameters'][param_key]\
@@ -516,17 +501,18 @@ def run(args, other_args, subparser):
                 )
         # input URIs
         for input_key in job['inputs']:
-            parsed_uri = URIParser.parse(job['inputs'][input_key])
-            if not parsed_uri:
-                Log.an().error(
-                    'invalid input uri: %s', job['inputs'][input_key]
-                )
-                return False
-            # expand relative path if local
-            if parsed_uri['scheme'] == 'local':
-                job['inputs'][input_key] = str(
-                    Path(parsed_uri['chopped_path']).expanduser().resolve()
-                )
+            for i, input_uri in enumerate(job['inputs'][input_key]):
+                parsed_uri = URIParser.parse(input_uri)
+                if not parsed_uri:
+                    Log.an().error(
+                        'invalid input uri: %s', input_uri
+                    )
+                    return False
+                # expand relative path if local
+                if parsed_uri['scheme'] == 'local':
+                    job['inputs'][input_key][i] = str(
+                        Path(parsed_uri['chopped_path']).expanduser().resolve()
+                    )
 
     # import jobs into database
     job_ids = data_source.import_jobs_from_dict(jobs_dict)

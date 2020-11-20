@@ -42,10 +42,10 @@ WORKFLOW_SCHEMA = {
                         'default': 'Any',
                         'allowed': ['File', 'Directory', 'Any']
                     },
-                    'default': {'type': 'string', 'default': ''},
+                    'default': {'anyof': [{'type': 'string', 'default': ''}, {'type': 'list', 'schema': {'type': 'string'}, 'default': []}]},
                     'enable': {'type': 'boolean', 'default': True},
                     'visible': {'type': 'boolean', 'default': True},
-                    'value': {'type': 'string', 'default': ''}
+                    'value': {'anyof': [{'type': 'string', 'default': ''}, {'type': 'list', 'schema': {'type': 'string'}, 'default': []}]}
                 }
             }
         },
@@ -271,7 +271,7 @@ JOB_SCHEMA = {
             'coerce': (lambda s: str(s).lower() in ['true','yes','1'])
         },
         'inputs': {
-            'type': 'dict', 'default': {}, 'valueschema': {'type': 'string'}
+            'type': 'dict', 'default': {}, 'valueschema': {'anyof': [{'type': 'string'}, {'type': 'list', 'schema': {'type': 'string'}}]}
         },
         'parameters': {
             'type': 'dict', 'default': {}
