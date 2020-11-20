@@ -198,7 +198,9 @@ def run(args, other_args, subparser):
                 type=str,
                 dest='inputs.{}'.format(input_key),
                 required=False,
-                default=workflow_dict['inputs'][input_key]['default'] if isinstance(workflow_dict['inputs'][input_key]['default'], list) else [workflow_dict['inputs'][input_key]['default']],
+                default=workflow_dict['inputs'][input_key]['default'] \
+                    if isinstance(workflow_dict['inputs'][input_key]['default'], list) \
+                    else [workflow_dict['inputs'][input_key]['default']],
                 help=workflow_dict['inputs'][input_key]['label']
             )
         for param_key in workflow_dict['parameters']:
@@ -295,7 +297,9 @@ def run(args, other_args, subparser):
                     type=str,
                     dest='inputs.{}'.format(input_key),
                     required=False,
-                    default=workflow_dict['inputs'][input_key]['default'] if isinstance(workflow_dict['inputs'][input_key]['default'], list) else [workflow_dict['inputs'][input_key]['default']],
+                    default=workflow_dict['inputs'][input_key]['default'] \
+                        if isinstance(workflow_dict['inputs'][input_key]['default'], list) \
+                        else [workflow_dict['inputs'][input_key]['default']],
                     help=workflow_dict['inputs'][input_key]['label'],
                     widget=widget
                 )
@@ -470,7 +474,9 @@ def run(args, other_args, subparser):
         for input_key in workflow_dict['inputs']:
             if input_key not in job['inputs']:
                 job['inputs'][input_key]\
-                    = workflow_dict['inputs'][input_key]['default'] if isinstance(workflow_dict['inputs'][input_key]['default'], list) else [workflow_dict['inputs'][input_key]['default']]
+                    = workflow_dict['inputs'][input_key]['default'] \
+                        if isinstance(workflow_dict['inputs'][input_key]['default'], list) \
+                        else [workflow_dict['inputs'][input_key]['default']]
         for param_key in workflow_dict['parameters']:
             if param_key not in job['parameters']:
                 job['parameters'][param_key]\
