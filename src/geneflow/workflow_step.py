@@ -101,8 +101,8 @@ class WorkflowStep(StageableData):
 
         # map/reduce
         self._map = []
-        self._map_uri = ''  # expanded map_uri
-        self._parsed_map_uri = {}
+        self._map_uris = []  # expanded map_uris
+        self._parsed_map_uris = []
         self._replace = {}
 
         # init StageableData base class
@@ -212,7 +212,7 @@ class WorkflowStep(StageableData):
                 # step's output
                 if (
                         self._depend_uris[depend]['scheme']
-                        != self._parsed_data_uris[self._source_context]\
+                        != self._parsed_data_uris[self._source_context][0]\
                             ['scheme']
                 ):
                     msg = 'incompatible scheme for depend uri {} of step {}'\
@@ -253,28 +253,27 @@ class WorkflowStep(StageableData):
         """
         if not self._step['map']['uri']:
             # map URI is an optional definition field
-            self._map_uri = ''
+            self._map_uri = []
         else:
             match = re.match(r'\${([^{}]+)->([^{}]+)}', self._step['map']['uri'])
             if match:
                 if match.group(1) == 'workflow': # use workflow-level input uri
                     # check if uri name is in input list
                     if match.group(2) in self._inputs:
-                        # make sure the input URI to be used as the map URI
-                        # is valid
-                        self._parsed_map_uri = URIParser.parse(
-                            self._inputs[match.group(2)]
-                        )
-                        if not self._parsed_map_uri:
-                            msg = 'invalid map uri for inputs.{}: {}'\
-                                .format(
-                                    match.group(2),
-                                    self._inputs[match.group(2)]
-                                )
-                            Log.an().error(msg)
-                            return self._fatal(msg)
-
-                        self._map_uri = self._parsed_map_uri['chopped_uri']
+                        # make sure the input URIs to be used as the map URIs
+                        # are valid
+                        for input_uri in self._inputs[match.group(2)]:
+                            parsed_map_uri = URIParser.parse(self._inputs[match.group(2)])
+                            if not parsed_map_uri:
+                                msg = 'invalid map uri for inputs.{}: {}'\
+                                    .format(
+                                        match.group(2),
+                                        input_uri
+                                    )
+                                Log.an().error(msg)
+                                return self._fatal(msg)
+                            self._parsed_map_uri.append(parsed_map_uri)
+                            self._map_uris.append(parsed_map_uri['chopped_uri'])
 
                     else:
                         msg = 'invalid template reference to input: {}'\
@@ -286,10 +285,12 @@ class WorkflowStep(StageableData):
                     # check if previous step is a dependency
                     if match.group(1) in self._step['depend']:
                         if match.group(2) == 'output':
-                            self._map_uri = self._depend_uris[match.group(1)]\
-                                ['chopped_uri']
-                            self._parsed_map_uri \
-                                = self._depend_uris[match.group(1)]
+                            self._map_uris.append(
+                                self._depend_uris[match.group(1)]['chopped_uri']
+                            )
+                            self._parsed_map_uris.append(
+                                self._depend_uris[match.group(1)]
+                            )
 
                         else:
                             msg = 'invalid template reference, must be "output": {}'\
@@ -363,7 +364,7 @@ class WorkflowStep(StageableData):
             return pattern.sub(lambda x: rep_dict[x.group(0)], string)
 
         # iterate map items
-        if self._map_uri == '':
+        if self._map_uris == []:
             # no mapping, run only one job
             self._map = [{
                 'filename': 'root',
@@ -378,15 +379,15 @@ class WorkflowStep(StageableData):
             # list uri contents and place into matched files
             file_list = self._get_map_uri_list()
             if file_list is False:
-                msg = 'cannot get list of items from map uri: {}'.format(
-                    self._map_uri
+                msg = 'cannot get list of items from map uris: {}'.format(
+                    self._map_uris
                 )
                 Log.an().error(msg)
                 return self._fatal(msg)
 
             if file_list == []: # this folder should never be empty
                 msg = 'map uri contents cannot be empty: {}'.format(
-                    self._map_uri
+                    self._map_uris
                 )
                 Log.an().error(msg)
                 return self._fatal(msg)
@@ -412,13 +413,14 @@ class WorkflowStep(StageableData):
                 msg = (
                     'map uri contents must include at least'
                     ' one item matching regex: {}'
-                ).format(self._map_uri)
+                ).format(self._map_uris)
                 Log.an().error(msg)
                 return self._fatal(msg)
 
         # iterate through items, expand templates
         for map_item in self._map:
             replace = map_item['replace'].copy()
+            ##### update _replace ${workflow->input} with input corresponding to map item
             replace.update(self._replace)
             for template_key in self._step['template']:
                 if isinstance(self._step['template'][template_key], str):
