@@ -684,15 +684,19 @@ class WorkflowStep(StageableData):
             # all jobs must be finished
             Log.some().info('[step.%s]: checkpoint: all jobs must finish', self._step['name'])
             return all(finished)
-        elif checkpoint == 'none':
+
+        if checkpoint == 'none':
             # no jobs have to be finished
             Log.some().info('[step.%s]: checkpoint: jobs do not have to finish', self._step['name'])
             return True
-        else:
-            # at least one job must be finished
-            # default to 'any' if anything other than 'all', 'any', or 'none is used
-            Log.some().info('[step.%s]: checkpoint: at least one job must finish', self._step['name'])
-            return any(finished)
+
+        # at least one job must be finished
+        # default to 'any' if anything other than 'all', 'any', or 'none is used
+        Log.some().info(
+            '[step.%s]: checkpoint: at least one job must finish',
+            self._step['name']
+        )
+        return any(finished)
 
 
     def get_status(self):

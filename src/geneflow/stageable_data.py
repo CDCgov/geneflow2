@@ -111,12 +111,11 @@ class StageableData:
                     pass
 
                 Log.some().debug(
-                    'staging data: {}->{} to {}->{}'.format(
-                        self._source_context,
-                        self._parsed_data_uris[self._source_context]['chopped_uri'],
-                        context,
-                        self._parsed_data_uris[context]['chopped_uri']
-                    )
+                    'staging data: %s->%s to %s->%s',
+                    self._source_context,
+                    self._parsed_data_uris[self._source_context]['chopped_uri'],
+                    context,
+                    self._parsed_data_uris[context]['chopped_uri']
                 )
 
                 if context != 'final':
@@ -160,12 +159,11 @@ class StageableData:
                     pass
 
                 Log.some().debug(
-                    'staging final data: {}->{} to {}->{}'.format(
-                        self._source_context,
-                        self._parsed_data_uris[self._source_context]['chopped_uri'],
-                        context,
-                        self._parsed_data_uris[context]['chopped_uri']
-                    )
+                    'staging final data: %s->%s to %s->%s',
+                    self._source_context,
+                    self._parsed_data_uris[self._source_context]['chopped_uri'],
+                    context,
+                    self._parsed_data_uris[context]['chopped_uri']
                 )
 
                 if context == 'final':

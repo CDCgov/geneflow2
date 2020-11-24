@@ -283,7 +283,7 @@ class WorkflowDAG:
                 msg = 'cannot import context-specific step module: {} [{}]'\
                     .format(mod_name, str(err))
                 Log.an().error(msg)
-                raise WorkflowDAGException(msg)
+                raise WorkflowDAGException(msg) from err
 
             try:
                 step_class = getattr(step_mod, cls_name)
@@ -291,7 +291,7 @@ class WorkflowDAG:
                 msg = 'cannot import context-specific step class: {} [{}]'\
                     .format(cls_name, str(err))
                 Log.an().error(msg)
-                raise WorkflowDAGException(msg)
+                raise WorkflowDAGException(msg) from err
 
             # reference to step class
             self._context_classes[context] = step_class
@@ -480,13 +480,15 @@ class WorkflowDAG:
                     input_name, str(err)
                 )
                 Log.an().error(msg)
-                raise WorkflowDAGException(msg)
+                raise WorkflowDAGException(msg) from err
 
         # add empty step nodes to graph
         for step_name, step in self._workflow['steps'].items():
 
             # extract the step source context
-            source_data_context = Contexts.get_data_scheme_of_exec_context(step['execution']['context'])
+            source_data_context = Contexts.get_data_scheme_of_exec_context(
+                step['execution']['context']
+            )
             if not source_data_context:
                 msg = 'invalid execution context ({}) for step {}'.format(
                     step['execution']['context'], step_name
@@ -514,7 +516,7 @@ class WorkflowDAG:
                     step_name, str(err)
                 )
                 Log.an().error(msg)
-                raise WorkflowDAGException(msg)
+                raise WorkflowDAGException(msg) from err
 
         # create graph edges and determine contexts for each node based on
         #   dependencies
@@ -543,7 +545,7 @@ class WorkflowDAG:
                                 'node "{}" [{}]'
                             ).format(input_node, step_node, str(err))
                             Log.an().error(msg)
-                            raise WorkflowDAGException(msg)
+                            raise WorkflowDAGException(msg) from err
 
                         # add context key to dict for input node
                         self._graph.nodes[input_node]['contexts'][
@@ -582,7 +584,7 @@ class WorkflowDAG:
                             'node "{}" [{}]'
                         ).format(depend_node, step_node, str(err))
                         Log.an().error(msg)
-                        raise WorkflowDAGException(msg)
+                        raise WorkflowDAGException(msg) from err
 
                     # add context key to dict for depend node
                     self._graph.nodes[depend_node]['contexts'][
@@ -617,7 +619,7 @@ class WorkflowDAG:
                         node['source_context'], str(err)
                     )
                     Log.an().error(msg)
-                    raise WorkflowDAGException(msg)
+                    raise WorkflowDAGException(msg) from err
 
                 # construct other context URIs
                 for context in node['contexts']:
@@ -634,7 +636,7 @@ class WorkflowDAG:
                                 context, str(err)
                             )
                             Log.an().error(msg)
-                            raise WorkflowDAGException(msg)
+                            raise WorkflowDAGException(msg) from err
 
                 # create instance of WorkflowInput class
                 node['node'] = WorkflowInput(
@@ -675,7 +677,7 @@ class WorkflowDAG:
                         node['source_context'], str(err)
                     )
                     Log.an().error(msg)
-                    raise WorkflowDAGException(msg)
+                    raise WorkflowDAGException(msg) from err
 
                 # construct other context URIs
                 for context in node['contexts']:
@@ -692,7 +694,7 @@ class WorkflowDAG:
                                 context, str(err)
                             )
                             Log.an().error(msg)
-                            raise WorkflowDAGException(msg)
+                            raise WorkflowDAGException(msg) from err
 
                 # create instance of WorkflowStep class depending on context
                 node['node'] = self._context_classes[node['exec_context']](

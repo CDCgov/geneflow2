@@ -1,10 +1,10 @@
 """This module contains the GeneFlow Workflow class."""
 
 
-import json
+import time
+
 import requests
 from slugify import slugify
-import time
 import yaml
 
 from geneflow.log import Log
@@ -401,7 +401,7 @@ class Workflow:
                 Log.an().error(msg)
                 return self._fatal(msg)
 
-        Log.some().debug('execution contexts: {}'.format(self._exec_contexts))
+        Log.some().debug('execution contexts: %s', self._exec_contexts)
 
         return True
 
@@ -450,7 +450,7 @@ class Workflow:
                 Log.an().error(msg)
                 return self._fatal(msg)
 
-        Log.some().debug('data contexts: {}'.format(self._data_contexts))
+        Log.some().debug('data contexts: %s', self._data_contexts)
 
         return True
 
@@ -502,7 +502,7 @@ class Workflow:
 
             if not parsed_job_work_uri:
                 msg = 'invalid job work uri for context: {}->{}'.format(
-                    exec_context, full_job_work_uri
+                    context, full_job_work_uri
                 )
                 Log.an().error(msg)
                 return self._fatal(msg)
