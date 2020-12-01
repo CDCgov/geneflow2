@@ -4,6 +4,7 @@
 import os
 import sys
 import argparse
+from itertools import chain
 from pathlib import Path
 from multiprocessing import Pool
 from functools import partial

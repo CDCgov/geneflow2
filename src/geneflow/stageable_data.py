@@ -1,5 +1,6 @@
 """This module contains the GeneFlow StageableData class."""
 
+import pprint
 
 from geneflow.data_manager import DataManager
 from geneflow.log import Log
@@ -63,6 +64,7 @@ class StageableData:
         # parse data uris
         for context in self._data_uris:
             self._parsed_data_uris[context] = []
+            pprint.pprint(self._data_uris[context])
             for uri in self._data_uris[context]:
                 parsed_uri = URIParser.parse(uri)
                 if not parsed_uri:
@@ -120,7 +122,7 @@ class StageableData:
                         self._source_context,
                         parsed_source_uri['chopped_uri'],
                         context,
-                        self._parsed_data_uris[context]['chopped_uri']
+                        self._parsed_data_uris[context][0]['chopped_uri']
                     )
 
                     if context != 'final':
@@ -168,7 +170,7 @@ class StageableData:
                         self._source_context,
                         parsed_source_uri['chopped_uri'],
                         context,
-                        self._parsed_data_uris[context]['chopped_uri']
+                        self._parsed_data_uris[context][0]['chopped_uri']
                     )
 
                     if context == 'final':

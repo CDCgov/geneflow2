@@ -3,6 +3,8 @@
 import json
 import regex as re
 
+import pprint
+
 from geneflow.log import Log
 from geneflow.data import DataSource, DataSourceException
 from geneflow.stageable_data import StageableData
@@ -108,6 +110,12 @@ class WorkflowStep(StageableData):
         # init StageableData base class
         StageableData.__init__(self, data_uris, source_context, clean)
 
+        print('depend URIs')
+        pprint.pprint(depend_uris)
+
+        print('data URIs')
+        pprint.pprint(data_uris)
+
 
     def initialize(self):
         """
@@ -211,13 +219,13 @@ class WorkflowStep(StageableData):
                 # check if depend URI scheme is the same as that of this
                 # step's output
                 if (
-                        self._depend_uris[depend]['scheme']
+                        self._depend_uris[depend][0]['scheme']
                         != self._parsed_data_uris[self._source_context][0]\
                             ['scheme']
                 ):
                     msg = 'incompatible scheme for depend uri {} of step {}'\
                         .format(
-                            self._depend_uris[depend]['chopped_uri'],
+                            self._depend_uris[depend][0]['chopped_uri'],
                             depend
                         )
                     Log.an().error(msg)
@@ -263,7 +271,7 @@ class WorkflowStep(StageableData):
                         # make sure the input URIs to be used as the map URIs
                         # are valid
                         for input_uri in self._inputs[match.group(2)]:
-                            parsed_map_uri = URIParser.parse(self._inputs[match.group(2)])
+                            parsed_map_uri = URIParser.parse(input_uri)
                             if not parsed_map_uri:
                                 msg = 'invalid map uri for inputs.{}: {}'\
                                     .format(
@@ -272,7 +280,7 @@ class WorkflowStep(StageableData):
                                     )
                                 Log.an().error(msg)
                                 return self._fatal(msg)
-                            self._parsed_map_uri.append(parsed_map_uri)
+                            self._parsed_map_uris.append(parsed_map_uri)
                             self._map_uris.append(parsed_map_uri['chopped_uri'])
 
                     else:
@@ -286,10 +294,10 @@ class WorkflowStep(StageableData):
                     if match.group(1) in self._step['depend']:
                         if match.group(2) == 'output':
                             self._map_uris.append(
-                                self._depend_uris[match.group(1)]['chopped_uri']
+                                self._depend_uris[match.group(1)][0]['chopped_uri']
                             )
                             self._parsed_map_uris.append(
-                                self._depend_uris[match.group(1)]
+                                self._depend_uris[match.group(1)][0]
                             )
 
                         else:
@@ -368,6 +376,7 @@ class WorkflowStep(StageableData):
             # no mapping, run only one job
             self._map = [{
                 'filename': 'root',
+                'chopped_uri': '',
                 'replace': {},
                 'template': {},
                 'status': 'PENDING',
@@ -392,16 +401,17 @@ class WorkflowStep(StageableData):
                 Log.an().error(msg)
                 return self._fatal(msg)
 
-            for filename in file_list:
+            for f in file_list:
                 # check if file matches regex
-                match = re.match(self._step['map']['regex'], filename)
+                match = re.match(self._step['map']['regex'], f['filename'])
                 if match:
                     groups = list(match.groups())
                     replace = {}
                     for i, group in enumerate(groups):
                         replace[str('${'+str(i+1)+'}')] = str(group)
                     self._map.append({
-                        'filename': filename,
+                        'filename': f['filename'],
+                        'chopped_uri': f['chopped_uri'],
                         'replace': replace,
                         'template': {},
                         'status': 'PENDING',
@@ -420,8 +430,9 @@ class WorkflowStep(StageableData):
         # iterate through items, expand templates
         for map_item in self._map:
             replace = map_item['replace'].copy()
-            ##### update _replace ${workflow->input} with input corresponding to map item
             replace.update(self._replace)
+            ##### replace map uri base with value corresponding to map item
+            replace[self._step['map']['uri']] = map_item['chopped_uri']
             for template_key in self._step['template']:
                 if isinstance(self._step['template'][template_key], str):
                     map_item['template'][template_key] = multiple_replace(
@@ -466,7 +477,7 @@ class WorkflowStep(StageableData):
                         # replace with workflow-level input or parameter
                         if match[1] in self._inputs:
                             self._replace[str(key)] \
-                                = str(self._inputs[match[1]])
+                                = str(self._inputs[match[1]][0])
 
                         elif match[1] in self._parameters:
                             self._replace[str(key)] \
@@ -485,7 +496,7 @@ class WorkflowStep(StageableData):
                         if match[0] in self._step['depend']:
                             if match[1] == 'output':
                                 self._replace[str(key)] \
-                                    = self._depend_uris[match[0]]\
+                                    = self._depend_uris[match[0]][0]\
                                         ['chopped_uri']
 
                             else:

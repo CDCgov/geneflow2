@@ -4,6 +4,8 @@ import networkx as nx
 import regex as re
 from slugify import slugify
 
+import pprint
+
 from geneflow.data_manager import DataManager
 from geneflow.log import Log
 from geneflow.uri_parser import URIParser
@@ -139,6 +141,8 @@ class WorkflowDAG:
             msg = 'cannot initialize context uris'
             Log.an().error(msg)
             raise WorkflowDAGException(str(err)+'|'+msg) from err
+
+        pprint.pprint(self._context_uris)
 
         # initalize input nodes
         try:
@@ -332,19 +336,18 @@ class WorkflowDAG:
                 if node['type'] == 'input':
                     if node['source_context'] == context:
                         # use original input URI
-                        parsed_uri = URIParser.parse(
-                            self._workflow['inputs'][node['name']]['value']
-                        )
-                        if not parsed_uri:
-                            msg = 'invalid input uri: {}'.format(
-                                self._workflow['inputs'][node['name']]['value']
-                            )
-                            raise WorkflowDAGException(msg)
+                        self._context_uris['inputs'][context][node['name']] = []
+                        self._parsed_context_uris['inputs'][context][node['name']] = []
+                        for uri in self._workflow['inputs'][node['name']]['value']:
+                            parsed_uri = URIParser.parse(uri)
+                            if not parsed_uri:
+                                msg = 'invalid input uri: {}'.format(uri)
+                                raise WorkflowDAGException(msg)
 
-                        self._context_uris['inputs'][context][node['name']]\
-                            = parsed_uri['chopped_uri']
-                        self._parsed_context_uris['inputs'][context]\
-                            [node['name']] = parsed_uri
+                            self._context_uris['inputs'][context][node['name']]\
+                                .append(parsed_uri['chopped_uri'])
+                            self._parsed_context_uris['inputs'][context][node['name']]\
+                                .append(parsed_uri)
 
                     else:
                         # skip if _parsed_job_work_uri is not defined for this context
@@ -373,26 +376,25 @@ class WorkflowDAG:
                             raise WorkflowDAGException(msg)
 
                         # switch input URI base
-                        switched_uri = URIParser.switch_context(
-                            self._workflow['inputs'][node['name']]['value'],
-                            new_base_uri
-                        )
-                        if not switched_uri:
-                            msg = (
-                                'cannot switch input uri context to '
-                                'new base URI: {}->{}'
-                            ).format(
-                                self._workflow['inputs'][node['name']]\
-                                    ['value'],
+                        self._context_uris['inputs'][context][node['name']] = []
+                        self._parsed_context_uris['inputs'][context][node['name']] = []
+                        for uri in self._workflow['inputs'][node['name']]['value']:
+                            switched_uri = URIParser.switch_context(
+                                uri,
                                 new_base_uri
                             )
-                            Log.an().error(msg)
-                            raise WorkflowDAGException(msg)
+                            if not switched_uri:
+                                msg = (
+                                    'cannot switch input uri context to '
+                                    'new base URI: {}->{}'
+                                ).format(uri, new_base_uri)
+                                Log.an().error(msg)
+                                raise WorkflowDAGException(msg)
 
-                        self._context_uris['inputs'][context][node['name']]\
-                            = switched_uri['chopped_uri']
-                        self._parsed_context_uris['inputs'][context]\
-                            [node['name']] = switched_uri
+                            self._context_uris['inputs'][context][node['name']]\
+                                .append(switched_uri['chopped_uri'])
+                            self._parsed_context_uris['inputs'][context][node['name']]\
+                                .append(switched_uri)
 
         for context in {
                 Contexts.get_data_scheme_of_exec_context(con)
@@ -407,14 +409,14 @@ class WorkflowDAG:
                 node = self._graph.nodes[node_name]
                 if node['type'] == 'step':
                     self._context_uris['steps'][context][node['name']]\
-                        = '{}/{}'.format(
+                        = ['{}/{}'.format(
                             self._parsed_job_work_uri[context]['chopped_uri'],
                             slugify(node['name'], regex_pattern=r'[^-a-z0-9_]+')
-                        )
+                        )]
                     self._parsed_context_uris['steps'][context][node['name']]\
-                        = URIParser.parse(
-                            self._context_uris['steps'][context][node['name']]
-                        )
+                        = [URIParser.parse(
+                            self._context_uris['steps'][context][node['name']][0]
+                        )]
 
         # init final contexts for steps
         for node_name in self._topo_sort:
@@ -423,14 +425,14 @@ class WorkflowDAG:
 
             if node['type'] == 'step':
                 self._context_uris['steps']['final'][node['name']]\
-                    = '{}/{}'.format(
+                    = ['{}/{}'.format(
                         self._parsed_job_output_uri['chopped_uri'],
                         slugify(node['name'], regex_pattern=r'[^-a-z0-9_]+')
-                    )
+                    )]
                 self._parsed_context_uris['steps']['final'][node['name']]\
-                    = URIParser.parse(
+                    = [URIParser.parse(
                         self._context_uris['steps']['final'][node['name']]
-                    )
+                    )]
 
 
     def _init_graph_structure(self):
