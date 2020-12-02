@@ -431,7 +431,7 @@ class WorkflowDAG:
                     )]
                 self._parsed_context_uris['steps']['final'][node['name']]\
                     = [URIParser.parse(
-                        self._context_uris['steps']['final'][node['name']]
+                        self._context_uris['steps']['final'][node['name']][0]
                     )]
 
 
