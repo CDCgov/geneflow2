@@ -409,14 +409,14 @@ class WorkflowDAG:
                 node = self._graph.nodes[node_name]
                 if node['type'] == 'step':
                     self._context_uris['steps'][context][node['name']]\
-                        = '{}/{}'.format(
+                        = ['{}/{}'.format(
                             self._parsed_job_work_uri[context]['chopped_uri'],
                             slugify(node['name'], regex_pattern=r'[^-a-z0-9_]+')
-                        )
+                        )]
                     self._parsed_context_uris['steps'][context][node['name']]\
-                        = URIParser.parse(
-                            self._context_uris['steps'][context][node['name']]
-                        )
+                        = [URIParser.parse(
+                            self._context_uris['steps'][context][node['name']][0]
+                        )]
 
         # init final contexts for steps
         for node_name in self._topo_sort:
@@ -425,14 +425,14 @@ class WorkflowDAG:
 
             if node['type'] == 'step':
                 self._context_uris['steps']['final'][node['name']]\
-                    = '{}/{}'.format(
+                    = ['{}/{}'.format(
                         self._parsed_job_output_uri['chopped_uri'],
                         slugify(node['name'], regex_pattern=r'[^-a-z0-9_]+')
-                    )
+                    )]
                 self._parsed_context_uris['steps']['final'][node['name']]\
-                    = URIParser.parse(
+                    = [URIParser.parse(
                         self._context_uris['steps']['final'][node['name']]
-                    )
+                    )]
 
 
     def _init_graph_structure(self):

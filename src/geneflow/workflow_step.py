@@ -219,13 +219,13 @@ class WorkflowStep(StageableData):
                 # check if depend URI scheme is the same as that of this
                 # step's output
                 if (
-                        self._depend_uris[depend]['scheme']
-                        != self._parsed_data_uris[self._source_context]\
+                        self._depend_uris[depend][0]['scheme']
+                        != self._parsed_data_uris[self._source_context][0]\
                             ['scheme']
                 ):
                     msg = 'incompatible scheme for depend uri {} of step {}'\
                         .format(
-                            self._depend_uris[depend]['chopped_uri'],
+                            self._depend_uris[depend][0]['chopped_uri'],
                             depend
                         )
                     Log.an().error(msg)
@@ -476,8 +476,6 @@ class WorkflowStep(StageableData):
                     if match[0] == 'workflow':
                         # replace with workflow-level input or parameter
                         if match[1] in self._inputs:
-                            # use first input item, but this will be replaced
-                            # with the appropriate item corresponding to map item
                             self._replace[str(key)] \
                                 = str(self._inputs[match[1]][0])
 
@@ -498,7 +496,7 @@ class WorkflowStep(StageableData):
                         if match[0] in self._step['depend']:
                             if match[1] == 'output':
                                 self._replace[str(key)] \
-                                    = self._depend_uris[match[0]]\
+                                    = self._depend_uris[match[0]][0]\
                                         ['chopped_uri']
 
                             else:
