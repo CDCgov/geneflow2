@@ -74,11 +74,11 @@ class LocalStep(WorkflowStep):
             Log.an().error(msg)
             return self._fatal(msg)
 
-        # make sure app has a local definition
+        # make sure app has a local implementation
         if 'local' not in self._app['implementation']:
             msg = (
                 '"local" step class can only be instantiated with an app that'
-                ' has a "local" definition'
+                ' has a "local" implementation'
             )
             Log.an().error(msg)
             return self._fatal(msg)
