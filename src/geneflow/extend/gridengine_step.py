@@ -123,9 +123,9 @@ class GridengineStep(WorkflowStep):
 
         """
         # make sure the source data URI has a compatible scheme (local)
-        if self._parsed_data_uris[self._source_context]['scheme'] != 'local':
+        if self._parsed_data_uris[self._source_context][0]['scheme'] != 'local':
             msg = 'invalid data uri scheme for this step: {}'.format(
-                self._parsed_data_uris[self._source_context]['scheme']
+                self._parsed_data_uris[self._source_context][0]['scheme']
             )
             Log.an().error(msg)
             return self._fatal(msg)
@@ -133,25 +133,25 @@ class GridengineStep(WorkflowStep):
         # delete old folder if it exists and clean==True
         if (
                 DataManager.exists(
-                    parsed_uri=self._parsed_data_uris[self._source_context]
+                    parsed_uri=self._parsed_data_uris[self._source_context][0]
                 )
                 and self._clean
         ):
             if not DataManager.delete(
-                    parsed_uri=self._parsed_data_uris[self._source_context]
+                    parsed_uri=self._parsed_data_uris[self._source_context][0]
             ):
                 Log.a().warning(
                     'cannot delete existing data uri: %s',
-                    self._parsed_data_uris[self._source_context]['chopped_uri']
+                    self._parsed_data_uris[self._source_context][0]['chopped_uri']
                 )
 
         # create folder
         if not DataManager.mkdir(
-                parsed_uri=self._parsed_data_uris[self._source_context],
+                parsed_uri=self._parsed_data_uris[self._source_context][0],
                 recursive=True
         ):
             msg = 'cannot create data uri: {}'.format(
-                self._parsed_data_uris[self._source_context]['chopped_uri']
+                self._parsed_data_uris[self._source_context][0]['chopped_uri']
             )
             Log.an().error(msg)
             return self._fatal(msg)
@@ -159,12 +159,12 @@ class GridengineStep(WorkflowStep):
         # create _log folder
         if not DataManager.mkdir(
                 uri='{}/_log'.format(
-                    self._parsed_data_uris[self._source_context]['chopped_uri']
+                    self._parsed_data_uris[self._source_context][0]['chopped_uri']
                 ),
                 recursive=True
         ):
             msg = 'cannot create _log folder in data uri: {}/_log'.format(
-                self._parsed_data_uris[self._source_context]['chopped_uri']
+                self._parsed_data_uris[self._source_context][0]['chopped_uri']
             )
             Log.an().error(msg)
             return self._fatal(msg)
@@ -184,26 +184,34 @@ class GridengineStep(WorkflowStep):
             exception.
 
         """
-        # make sure map URI is compatible scheme (local)
-        if self._parsed_map_uri['scheme'] != 'local':
-            msg = 'invalid map uri scheme for this step: {}'.format(
-                self._parsed_map_uri['scheme']
+        combined_file_list = []
+        for uri in self._parsed_map_uris:
+            # make sure map URI is compatible scheme (local)
+            if uri['scheme'] != 'local':
+                msg = 'invalid map uri scheme for this step: {}'.format(
+                    uri['scheme']
+                )
+                Log.an().error(msg)
+                return self._fatal(msg)
+
+            # get file list from URI
+            file_list = DataManager.list(
+                parsed_uri=uri,
+                globstr=self._step['map']['glob']
             )
-            Log.an().error(msg)
-            return self._fatal(msg)
+            if file_list is False:
+                msg = 'cannot get contents of map uri: {}'\
+                    .format(uri['chopped_uri'])
+                Log.an().error(msg)
+                return self._fatal(msg)
 
-        # get file list from URI
-        file_list = DataManager.list(
-            parsed_uri=self._parsed_map_uri,
-            globstr=self._step['map']['glob']
-        )
-        if file_list is False:
-            msg = 'cannot get contents of map uri: {}'\
-                .format(self._parsed_map_uri['chopped_uri'])
-            Log.an().error(msg)
-            return self._fatal(msg)
+            for f in file_list:
+                combined_file_list.append({
+                    'chopped_uri': uri['chopped_uri'],
+                    'filename': f
+                })
 
-        return file_list
+        return combined_file_list
 
 
     def _run_map(self, map_item):
@@ -258,7 +266,7 @@ class GridengineStep(WorkflowStep):
         for param_key in parameters:
             if param_key == 'output':
                 args.append('--output={}/{}'.format(
-                    self._parsed_data_uris[self._source_context]\
+                    self._parsed_data_uris[self._source_context][0]\
                         ['chopped_path'],
                     parameters['output']
                 ))
@@ -291,7 +299,7 @@ class GridengineStep(WorkflowStep):
 
         # construct paths for logging stdout and stderr
         log_path = '{}/_log/{}'.format(
-            self._parsed_data_uris[self._source_context]['chopped_path'],
+            self._parsed_data_uris[self._source_context][0]['chopped_path'],
             name
         )
 

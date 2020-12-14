@@ -123,9 +123,9 @@ class SlurmStep(WorkflowStep):
 
         """
         # make sure the source data URI has a compatible scheme (local)
-        if self._parsed_data_uris[self._source_context]['scheme'] != 'local':
+        if self._parsed_data_uris[self._source_context][0]['scheme'] != 'local':
             msg = 'invalid data uri scheme for this step: {}'.format(
-                self._parsed_data_uris[self._source_context]['scheme']
+                self._parsed_data_uris[self._source_context][0]['scheme']
             )
             Log.an().error(msg)
             return self._fatal(msg)
@@ -133,25 +133,25 @@ class SlurmStep(WorkflowStep):
         # delete old folder if it exists and clean==True
         if (
                 DataManager.exists(
-                    parsed_uri=self._parsed_data_uris[self._source_context]
+                    parsed_uri=self._parsed_data_uris[self._source_context][0]
                 )
                 and self._clean
         ):
             if not DataManager.delete(
-                    parsed_uri=self._parsed_data_uris[self._source_context]
+                    parsed_uri=self._parsed_data_uris[self._source_context][0]
             ):
                 Log.a().warning(
                     'cannot delete existing data uri: %s',
-                    self._parsed_data_uris[self._source_context]['chopped_uri']
+                    self._parsed_data_uris[self._source_context][0]['chopped_uri']
                 )
 
         # create folder
         if not DataManager.mkdir(
-                parsed_uri=self._parsed_data_uris[self._source_context],
+                parsed_uri=self._parsed_data_uris[self._source_context][0],
                 recursive=True
         ):
             msg = 'cannot create data uri: {}'.format(
-                self._parsed_data_uris[self._source_context]['chopped_uri']
+                self._parsed_data_uris[self._source_context][0]['chopped_uri']
             )
             Log.an().error(msg)
             return self._fatal(msg)
@@ -159,12 +159,12 @@ class SlurmStep(WorkflowStep):
         # create _log folder
         if not DataManager.mkdir(
                 uri='{}/_log'.format(
-                    self._parsed_data_uris[self._source_context]['chopped_uri']
+                    self._parsed_data_uris[self._source_context][0]['chopped_uri']
                 ),
                 recursive=True
         ):
             msg = 'cannot create _log folder in data uri: {}/_log'.format(
-                self._parsed_data_uris[self._source_context]['chopped_uri']
+                self._parsed_data_uris[self._source_context][0]['chopped_uri']
             )
             Log.an().error(msg)
             return self._fatal(msg)

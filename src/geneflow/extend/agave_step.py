@@ -101,7 +101,7 @@ class AgaveStep(WorkflowStep):
             Log.an().error(msg)
             return self._fatal(msg)
 
-        # make sure app has an agave definition
+        # make sure app has an agave implementation
         if 'agave' not in self._app['implementation']:
             msg = (
                 '"agave" step class can only be instantiated with an app that'
@@ -131,9 +131,9 @@ class AgaveStep(WorkflowStep):
 
         """
         # make sure the source data URI has a compatible scheme (agave)
-        if self._parsed_data_uris[self._source_context]['scheme'] != 'agave':
+        if self._parsed_data_uris[self._source_context][0]['scheme'] != 'agave':
             msg = 'invalid data uri scheme for this step: {}'.format(
-                self._parsed_data_uris[self._source_context]['scheme']
+                self._parsed_data_uris[self._source_context][0]['scheme']
             )
             Log.an().error(msg)
             return self._fatal(msg)
@@ -141,28 +141,28 @@ class AgaveStep(WorkflowStep):
         # delete folder if it already exists and clean==True
         if (
                 DataManager.exists(
-                    parsed_uri=self._parsed_data_uris[self._source_context],
+                    parsed_uri=self._parsed_data_uris[self._source_context][0],
                     agave=self._agave
                 )
                 and self._clean
         ):
             if not DataManager.delete(
-                    parsed_uri=self._parsed_data_uris[self._source_context],
+                    parsed_uri=self._parsed_data_uris[self._source_context][0],
                     agave=self._agave
             ):
                 Log.a().warning(
                     'cannot delete existing data uri: %s',
-                    self._parsed_data_uris[self._source_context]['chopped_uri']
+                    self._parsed_data_uris[self._source_context][0]['chopped_uri']
                 )
 
         # create folder
         if not DataManager.mkdir(
-                parsed_uri=self._parsed_data_uris[self._source_context],
+                parsed_uri=self._parsed_data_uris[self._source_context][0],
                 recursive=True,
                 agave=self._agave
         ):
             msg = 'cannot create data uri: {}'.format(
-                self._parsed_data_uris[self._source_context]['chopped_uri']
+                self._parsed_data_uris[self._source_context][0]['chopped_uri']
             )
             Log.an().error(msg)
             return self._fatal(msg)
@@ -170,13 +170,13 @@ class AgaveStep(WorkflowStep):
         # create _log folder
         if not DataManager.mkdir(
                 uri='{}/_log'.format(
-                    self._parsed_data_uris[self._source_context]['chopped_uri']
+                    self._parsed_data_uris[self._source_context][0]['chopped_uri']
                 ),
                 recursive=True,
                 agave=self._agave
         ):
             msg = 'cannot create _log folder in data uri: {}/_log'.format(
-                self._parsed_data_uris[self._source_context]['chopped_uri']
+                self._parsed_data_uris[self._source_context][0]['chopped_uri']
             )
             Log.an().error(msg)
             return self._fatal(msg)
@@ -196,27 +196,35 @@ class AgaveStep(WorkflowStep):
             exception.
 
         """
-        # make sure map URI is compatible scheme (agave)
-        if self._parsed_map_uri['scheme'] != 'agave':
-            msg = 'invalid map uri scheme for this step: {}'.format(
-                self._parsed_map_uri['scheme']
+        combined_file_list = []
+        for uri in self._parsed_map_uris:
+            # make sure map URI is compatible scheme (agave)
+            if uri['scheme'] != 'agave':
+                msg = 'invalid map uri scheme for this step: {}'.format(
+                    uri['scheme']
+                )
+                Log.an().error(msg)
+                return self._fatal(msg)
+
+            # get file list from URI
+            file_list = DataManager.list(
+                parsed_uri=uri,
+                globstr=self._step['map']['glob'],
+                agave=self._agave
             )
-            Log.an().error(msg)
-            return self._fatal(msg)
+            if file_list is False:
+                msg = 'cannot get contents of map uri: {}'\
+                    .format(uri['chopped_uri'])
+                Log.an().error(msg)
+                return self._fatal(msg)
 
-        # list files from URI
-        file_list = DataManager.list(
-            parsed_uri=self._parsed_map_uri,
-            globstr=self._step['map']['glob'],
-            agave=self._agave
-        )
-        if file_list is False:
-            msg = 'cannot get contents of map uri: {}'\
-                .format(self._parsed_map_uri['chopped_uri'])
-            Log.an().error(msg)
-            return self._fatal(msg)
+            for f in file_list:
+                combined_file_list.append({
+                    'chopped_uri': uri['chopped_uri'],
+                    'filename': f
+                })
 
-        return file_list
+        return combined_file_list
 
 
     def _run_map(self, map_item):
@@ -225,7 +233,7 @@ class AgaveStep(WorkflowStep):
 
         Args:
             self: class instance.
-            map_item: map item object (item of self._map)
+            map_item: map item object (item of self._map).
 
         Returns:
             On success: True.
@@ -522,7 +530,7 @@ class AgaveStep(WorkflowStep):
         """
         # destination _log directory, common for all map items
         dest_log_dir = '{}/{}'.format(
-            self._parsed_data_uris[self._source_context]\
+            self._parsed_data_uris[self._source_context][0]\
                 ['chopped_uri'],
             '_log'
         )
@@ -532,8 +540,8 @@ class AgaveStep(WorkflowStep):
 
             # copy step output
             if not self._agave['agave_wrapper'].files_import_from_agave(
-                    self._parsed_data_uris[self._source_context]['authority'],
-                    self._parsed_data_uris[self._source_context]\
+                    self._parsed_data_uris[self._source_context][0]['authority'],
+                    self._parsed_data_uris[self._source_context][0]\
                         ['chopped_path'],
                     map_item['template']['output'],
                     '{}/{}'.format(
@@ -561,10 +569,10 @@ class AgaveStep(WorkflowStep):
             for item in agave_log_list:
                 if re.match('^gf-\d*-.*\.(out|err)$', item):
                     if not self._agave['agave_wrapper'].files_import_from_agave(
-                        self._parsed_data_uris[self._source_context]\
+                        self._parsed_data_uris[self._source_context][0]\
                             ['authority'],
                         '{}/{}'.format(
-                            self._parsed_data_uris[self._source_context]\
+                            self._parsed_data_uris[self._source_context][0]\
                                 ['chopped_path'],
                             '_log'
                         ),
@@ -617,10 +625,10 @@ class AgaveStep(WorkflowStep):
                 # copy each list item
                 for item in log_list:
                     if not self._agave['agave_wrapper'].files_import_from_agave(
-                        self._parsed_data_uris[self._source_context]\
+                        self._parsed_data_uris[self._source_context][0]\
                             ['authority'],
                         '{}/{}'.format(
-                            self._parsed_data_uris[self._source_context]\
+                            self._parsed_data_uris[self._source_context][0]\
                                 ['chopped_path'],
                             '_log'
                         ),
