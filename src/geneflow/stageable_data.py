@@ -1,7 +1,5 @@
 """This module contains the GeneFlow StageableData class."""
 
-import pprint
-
 from geneflow.data_manager import DataManager
 from geneflow.log import Log
 from geneflow.uri_parser import URIParser
@@ -64,7 +62,6 @@ class StageableData:
         # parse data uris
         for context in self._data_uris:
             self._parsed_data_uris[context] = []
-            pprint.pprint(self._data_uris[context])
             for uri in self._data_uris[context]:
                 parsed_uri = URIParser.parse(uri)
                 if not parsed_uri:
@@ -115,25 +112,25 @@ class StageableData:
                     # remove target URI first
                     pass
 
-                for parsed_source_uri in self._parsed_data_uris[self._source_context]:
+                for i, parsed_source_uri in enumerate(self._parsed_data_uris[self._source_context]):
 
                     Log.some().debug(
                         'staging data: %s->%s to %s->%s',
                         self._source_context,
                         parsed_source_uri['chopped_uri'],
                         context,
-                        self._parsed_data_uris[context][0]['chopped_uri']
+                        self._parsed_data_uris[context][i]['chopped_uri']
                     )
 
                     if context != 'final':
                         if not DataManager.copy(
                                 parsed_src_uri=parsed_source_uri,
-                                parsed_dest_uri=self._parsed_data_uris[context][0],
+                                parsed_dest_uri=self._parsed_data_uris[context][i],
                                 **kwargs
                         ):
                             msg = 'cannot stage data by copying from {} to {}'.format(
                                 parsed_source_uri['chopped_uri'],
-                                self._parsed_data_uris[context][0]['chopped_uri']
+                                self._parsed_data_uris[context][i]['chopped_uri']
                             )
                             Log.an().error(msg)
                             return self._fatal(msg)
@@ -163,30 +160,30 @@ class StageableData:
                     # remove target URI first
                     pass
 
-                for parsed_source_uri in self._parsed_data_uris[self._source_context]:
+                for i, parsed_source_uri in enumerate(self._parsed_data_uris[self._source_context]):
 
                     Log.some().debug(
                         'staging final data: %s->%s to %s->%s',
                         self._source_context,
                         parsed_source_uri['chopped_uri'],
                         context,
-                        self._parsed_data_uris[context][0]['chopped_uri']
+                        self._parsed_data_uris[context][i]['chopped_uri']
                     )
 
                     if context == 'final':
                         if (
                                 parsed_source_uri['scheme'] == 'local'
-                                and self._parsed_data_uris[context][0]['scheme'] == 'local'
+                                and self._parsed_data_uris[context][i]['scheme'] == 'local'
                         ):
                             # move final data instead of copy, only for local-->local schemes
                             if not DataManager.move(
                                     parsed_src_uri=parsed_source_uri,
-                                    parsed_dest_uri=self._parsed_data_uris[context][0],
+                                    parsed_dest_uri=self._parsed_data_uris[context][i],
                                     **kwargs
                             ):
                                 msg = 'cannot stage final data by copying from {} to {}'.format(
                                     parsed_source_uri['chopped_uri'],
-                                    self._parsed_data_uris[context][0]['chopped_uri']
+                                    self._parsed_data_uris[context][i]['chopped_uri']
                                 )
                                 Log.an().error(msg)
                                 return self._fatal(msg)
@@ -194,12 +191,12 @@ class StageableData:
                         else:
                             if not DataManager.copy(
                                     parsed_src_uri=parsed_source_uri,
-                                    parsed_dest_uri=self._parsed_data_uris[context][0],
+                                    parsed_dest_uri=self._parsed_data_uris[context][i],
                                     **kwargs
                             ):
                                 msg = 'cannot stage final data by copying from {} to {}'.format(
                                     parsed_source_uri['chopped_uri'],
-                                    self._parsed_data_uris[context][0]['chopped_uri']
+                                    self._parsed_data_uris[context][i]['chopped_uri']
                                 )
                                 Log.an().error(msg)
                                 return self._fatal(msg)

@@ -4,8 +4,6 @@ import networkx as nx
 import regex as re
 from slugify import slugify
 
-import pprint
-
 from geneflow.data_manager import DataManager
 from geneflow.log import Log
 from geneflow.uri_parser import URIParser
@@ -141,8 +139,6 @@ class WorkflowDAG:
             msg = 'cannot initialize context uris'
             Log.an().error(msg)
             raise WorkflowDAGException(str(err)+'|'+msg) from err
-
-        pprint.pprint(self._context_uris)
 
         # initalize input nodes
         try:

@@ -3,8 +3,6 @@
 import json
 import regex as re
 
-import pprint
-
 from geneflow.log import Log
 from geneflow.data import DataSource, DataSourceException
 from geneflow.stageable_data import StageableData
@@ -109,12 +107,6 @@ class WorkflowStep(StageableData):
 
         # init StageableData base class
         StageableData.__init__(self, data_uris, source_context, clean)
-
-        print('depend URIs')
-        pprint.pprint(depend_uris)
-
-        print('data URIs')
-        pprint.pprint(data_uris)
 
 
     def initialize(self):

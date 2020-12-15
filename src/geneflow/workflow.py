@@ -2,7 +2,6 @@
 
 
 import time
-import pprint
 
 import requests
 from slugify import slugify
@@ -421,9 +420,7 @@ class Workflow:
         """
         # check input URIs for data contexts
         for input_key in self._workflow['inputs']:
-            #pprint.pprint(self._workflow['inputs'][input_key]['value'])
             parsed_uri = URIParser.parse(self._workflow['inputs'][input_key]['value'][0])
-            #pprint.pprint(parsed_uri)
             if not parsed_uri:
                 msg = 'invalid input uri: {}'.format(
                     self._workflow['inputs'][input_key]['value'][0]
