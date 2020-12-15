@@ -328,7 +328,20 @@ class GridengineStep(WorkflowStep):
         jt.nativeSpecification = native_spec
 
         # submit hpc job using drmaa library
-        job_id = self._gridengine['drmaa_session'].runJob(jt)
+        try:
+            job_id = self._gridengine['drmaa_session'].runJob(jt)
+
+        except drmaa.DrmCommunicationException as err:
+            msg = 'cannot submit gridengine job for step "{}" [{}]'\
+                    .format(self._step['name'], str(err))
+            Log.a().warning(msg)
+
+            # set to failed, but return True so that it's retried
+            map_item['status'] = 'FAILED'
+            map_item['run'][map_item['attempt']]['status'] = 'FAILED'
+
+            return True
+
         self._gridengine['drmaa_session'].deleteJobTemplate(jt)
 
         Log.a().debug(
