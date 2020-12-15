@@ -1,10 +1,10 @@
 """This module contains the GeneFlow Workflow class."""
 
 
-import json
+import time
+
 import requests
 from slugify import slugify
-import time
 import yaml
 
 from geneflow.log import Log
@@ -98,7 +98,7 @@ class Workflow:
             Log.an().error(msg)
             return self._fatal(msg)
 
-        # initialize set of execution contexts
+        # initialize set of data contexts
         if not self._init_data_context_set():
             msg = 'cannot initialize set of data contexts'
             Log.an().error(msg)
@@ -401,7 +401,7 @@ class Workflow:
                 Log.an().error(msg)
                 return self._fatal(msg)
 
-        Log.some().debug('execution contexts: {}'.format(self._exec_contexts))
+        Log.some().debug('execution contexts: %s', self._exec_contexts)
 
         return True
 
@@ -420,12 +420,10 @@ class Workflow:
         """
         # check input URIs for data contexts
         for input_key in self._workflow['inputs']:
-            parsed_uri = URIParser.parse(
-                self._workflow['inputs'][input_key]['value']
-            )
+            parsed_uri = URIParser.parse(self._workflow['inputs'][input_key]['value'][0])
             if not parsed_uri:
                 msg = 'invalid input uri: {}'.format(
-                    self._workflow['inputs'][input_key]['value']
+                    self._workflow['inputs'][input_key]['value'][0]
                 )
                 Log.an().error(msg)
                 return self._fatal(msg)
@@ -450,7 +448,7 @@ class Workflow:
                 Log.an().error(msg)
                 return self._fatal(msg)
 
-        Log.some().debug('data contexts: {}'.format(self._data_contexts))
+        Log.some().debug('data contexts: %s', self._data_contexts)
 
         return True
 
@@ -502,7 +500,7 @@ class Workflow:
 
             if not parsed_job_work_uri:
                 msg = 'invalid job work uri for context: {}->{}'.format(
-                    exec_context, full_job_work_uri
+                    context, full_job_work_uri
                 )
                 Log.an().error(msg)
                 return self._fatal(msg)
