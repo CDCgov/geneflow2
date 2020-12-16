@@ -184,26 +184,34 @@ class SlurmStep(WorkflowStep):
             exception.
 
         """
-        # make sure map URI is compatible scheme (local)
-        if self._parsed_map_uri['scheme'] != 'local':
-            msg = 'invalid map uri scheme for this step: {}'.format(
-                self._parsed_map_uri['scheme']
+        combined_file_list = []
+        for uri in self._parsed_map_uris:
+            # make sure map URI is compatible scheme (local)
+            if uri['scheme'] != 'local':
+                msg = 'invalid map uri scheme for this step: {}'.format(
+                    uri['scheme']
+                )
+                Log.an().error(msg)
+                return self._fatal(msg)
+
+            # get file list from URI
+            file_list = DataManager.list(
+                parsed_uri=uri,
+                globstr=self._step['map']['glob']
             )
-            Log.an().error(msg)
-            return self._fatal(msg)
+            if file_list is False:
+                msg = 'cannot get contents of map uri: {}'\
+                    .format(uri['chopped_uri'])
+                Log.an().error(msg)
+                return self._fatal(msg)
 
-        # get file list from URI
-        file_list = DataManager.list(
-            parsed_uri=self._parsed_map_uri,
-            globstr=self._step['map']['glob']
-        )
-        if file_list is False:
-            msg = 'cannot get contents of map uri: {}'\
-                .format(self._parsed_map_uri['chopped_uri'])
-            Log.an().error(msg)
-            return self._fatal(msg)
+            for f in file_list:
+                combined_file_list.append({
+                    'chopped_uri': uri['chopped_uri'],
+                    'filename': f
+                })
 
-        return file_list
+        return combined_file_list
 
 
     def _run_map(self, map_item):
@@ -258,7 +266,7 @@ class SlurmStep(WorkflowStep):
         for param_key in parameters:
             if param_key == 'output':
                 args.append('--output={}/{}'.format(
-                    self._parsed_data_uris[self._source_context]\
+                    self._parsed_data_uris[self._source_context][0]\
                         ['chopped_path'],
                     parameters['output']
                 ))
@@ -291,7 +299,7 @@ class SlurmStep(WorkflowStep):
 
         # construct paths for logging stdout and stderr
         log_path = '{}/_log/{}'.format(
-            self._parsed_data_uris[self._source_context]['chopped_path'],
+            self._parsed_data_uris[self._source_context][0]['chopped_path'],
             name
         )
 
@@ -322,10 +330,17 @@ class SlurmStep(WorkflowStep):
         # submit hpc job using drmaa library
         try:
             job_id = self._slurm['drmaa_session'].runJob(jt)
-        except drmaa.errors.DrmaaException as err:
-            msg = 'DRMAA exception: [{}]'.format(str(err))
-            Log.an().error(msg)
-            return self._fatal(msg)
+
+        except drmaa.DrmCommunicationException as err:
+            msg = 'cannot submit slurm job for step "{}" [{}]'\
+                    .format(self._step['name'], str(err))
+            Log.a().warning(msg)
+
+            # set to failed, but return True so that it's retried
+            map_item['status'] = 'FAILED'
+            map_item['run'][map_item['attempt']]['status'] = 'FAILED'
+
+            return True
 
         self._slurm['drmaa_session'].deleteJobTemplate(jt)
 
