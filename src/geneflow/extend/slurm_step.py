@@ -1,18 +1,20 @@
-"""This module contains the GeneFlow LocalStep class."""
+"""This module contains the GeneFlow SlurmStep class."""
 
 
+import drmaa
+import os
 from slugify import slugify
+import shutil
 
 from geneflow.log import Log
 from geneflow.workflow_step import WorkflowStep
 from geneflow.data_manager import DataManager
 from geneflow.uri_parser import URIParser
-from geneflow.shell_wrapper import ShellWrapper
 
 
-class LocalStep(WorkflowStep):
+class SlurmStep(WorkflowStep):
     """
-    A class that represents Local Workflow step objects.
+    A class that represents SLURM Workflow Step objects.
 
     Inherits from the "WorkflowStep" class.
     """
@@ -29,14 +31,14 @@ class LocalStep(WorkflowStep):
             data_uris,
             source_context,
             clean=False,
-            local={}
+            slurm={}
     ):
         """
-        Instantiate LocalStep class by calling the super class constructor.
+        Instantiate SlurmStep class by calling the super class constructor.
 
         See documentation for WorkflowStep __init__().
         """
-        super(LocalStep, self).__init__(
+        super(SlurmStep, self).__init__(
             job,
             step,
             app,
@@ -49,13 +51,29 @@ class LocalStep(WorkflowStep):
             clean
         )
 
+        # slurm context data
+        self._slurm = slurm
+
+        self._job_status_map = {
+            drmaa.JobState.UNDETERMINED: 'UNKNOWN',
+            drmaa.JobState.QUEUED_ACTIVE: 'PENDING',
+            drmaa.JobState.SYSTEM_ON_HOLD: 'PENDING',
+            drmaa.JobState.USER_ON_HOLD: 'PENDING',
+            drmaa.JobState.USER_SYSTEM_ON_HOLD: 'PENDING',
+            drmaa.JobState.RUNNING: 'RUNNING',
+            drmaa.JobState.SYSTEM_SUSPENDED: 'RUNNING',
+            drmaa.JobState.USER_SUSPENDED: 'RUNNING',
+            drmaa.JobState.DONE: 'FINISHED',
+            drmaa.JobState.FAILED: 'FAILED'
+        }
+
 
     def initialize(self):
         """
-        Initialize the LocalStep class.
+        Initialize the SlurmStep class.
 
-        Validate that the step context is appropriate for this "local" context.
-        And that the app contains a "local" definition.
+        Validate that the step context is appropriate for this "slurm" context.
+        And that the app contains a "slurm" definition.
 
         Args:
             self: class instance.
@@ -66,24 +84,25 @@ class LocalStep(WorkflowStep):
 
         """
         # make sure the step context is local
-        if self._step['execution']['context'] != 'local':
+        if self._step['execution']['context'] != 'slurm':
             msg = (
-                '"local" step class can only be instantiated with a'
-                ' step definition that has a "local" execution context'
+                '"slurm" step class can only be instantiated with a'
+                ' step definition that has a "slurm" execution context'
             )
             Log.an().error(msg)
             return self._fatal(msg)
 
         # make sure app has a local implementation
+        #   local def can be used by slurm because it just needs a shell script
         if 'local' not in self._app['implementation']:
             msg = (
-                '"local" step class can only be instantiated with an app that'
+                '"slurm" step class can only be instantiated with an app that'
                 ' has a "local" implementation'
             )
             Log.an().error(msg)
             return self._fatal(msg)
 
-        if not super(LocalStep, self).initialize():
+        if not super(SlurmStep, self).initialize():
             msg = 'cannot initialize workflow step'
             Log.an().error(msg)
             return self._fatal(msg)
@@ -197,7 +216,7 @@ class LocalStep(WorkflowStep):
 
     def _run_map(self, map_item):
         """
-        Run a job for each map item and store the proc and PID.
+        Run a job for each map item and store the job ID.
 
         Args:
             self: class instance.
@@ -227,59 +246,117 @@ class LocalStep(WorkflowStep):
                     parameters[param_key] \
                         = self._app['parameters'][param_key]['default']
 
-        # construct shell command
-        cmd = self._app['implementation']['local']['script']
+        # get full path of wrapper script
+        path = shutil.which(self._app['implementation']['local']['script'])
+        if not path:
+            msg = 'wrapper script not found in path: %s'.format(
+                self._app['implementation']['local']['script']
+            )
+            Log.an().error(msg)
+            return self._fatal(msg)
+
+        # construct argument list for wrapper script
+        args = [path]
         for input_key in inputs:
             if inputs[input_key]:
-                cmd += ' --{}="{}"'.format(
+                args.append('--{}={}'.format(
                     input_key,
                     URIParser.parse(inputs[input_key])['chopped_path']
-                )
+                ))
         for param_key in parameters:
             if param_key == 'output':
-                cmd += ' --output="{}/{}"'.format(
+                args.append('--output={}/{}'.format(
                     self._parsed_data_uris[self._source_context][0]\
                         ['chopped_path'],
                     parameters['output']
-                )
+                ))
 
             else:
-                cmd += ' --{}="{}"'.format(
+                args.append('--{}={}'.format(
                     param_key, parameters[param_key]
-                )
+                ))
 
         # add exeuction method
-        cmd += ' --exec_method="{}"'.format(self._step['execution']['method'])
+        args.append('--exec_method={}'.format(self._step['execution']['method']))
 
         # specify execution init commands if 'init' param given
         if 'init' in self._step['execution']['parameters']:
-            cmd += ' --exec_init="{}"'.format(self._step['execution']['parameters']['init'])
+            args.append('--exec_init={}'.format(self._step['execution']['parameters']['init']))
 
-        # add stdout and stderr
-        log_path = '{}/_log/gf-{}-{}-{}'.format(
-            self._parsed_data_uris[self._source_context][0]['chopped_path'],
+        Log.a().debug(
+            '[step.%s]: command: %s -> %s',
+            self._step['name'],
+            map_item['template']['output'],
+            ' '.join(args)
+        )
+
+        # construct job name
+        name = 'gf-{}-{}-{}'.format(
             map_item['attempt'],
             slugify(self._step['name'], regex_pattern=r'[^-a-z0-9_]+'),
             slugify(map_item['template']['output'], regex_pattern=r'[^-a-z0-9_]+')
         )
-        cmd += ' > "{}.out" 2> "{}.err"'.format(log_path, log_path)
 
-        Log.a().debug('command: %s', cmd)
+        # construct paths for logging stdout and stderr
+        log_path = '{}/_log/{}'.format(
+            self._parsed_data_uris[self._source_context][0]['chopped_path'],
+            name
+        )
 
-        # launch process
-        proc = ShellWrapper.spawn(cmd)
-        if proc is False:
-            msg = 'shell process error: {}'.format(cmd)
-            Log.an().error(msg)
-            return self._fatal(msg)
+        # create and populate job template
+        jt = self._slurm['drmaa_session'].createJobTemplate()
+        jt.remoteCommand = '/bin/bash'
+        jt.args = args
+        jt.jobName = name
+        jt.errorPath = ':{}.err'.format(log_path)
+        jt.outputPath = ':{}.out'.format(log_path)
+
+        # pass execution parameters to job template
+        native_spec = ' --nodes=1 --ntasks=1'
+        if 'queue' in self._step['execution']['parameters']:
+            native_spec += ' -p {}'.format(
+                self._step['execution']['parameters']['queue']
+            )
+        if 'slots' in self._step['execution']['parameters']:
+            native_spec += ' --cpus-per-task={}'.format(
+                self._step['execution']['parameters']['slots']
+            )
+        if 'other' in self._step['execution']['parameters']:
+            native_spec += ' {}'.format(
+                self._step['execution']['parameters']['other']
+            )
+        jt.nativeSpecification = native_spec
+
+        # submit hpc job using drmaa library
+        try:
+            job_id = self._slurm['drmaa_session'].runJob(jt)
+
+        except drmaa.DrmCommunicationException as err:
+            msg = 'cannot submit slurm job for step "{}" [{}]'\
+                    .format(self._step['name'], str(err))
+            Log.a().warning(msg)
+
+            # set to failed, but return True so that it's retried
+            map_item['status'] = 'FAILED'
+            map_item['run'][map_item['attempt']]['status'] = 'FAILED'
+
+            return True
+
+        self._slurm['drmaa_session'].deleteJobTemplate(jt)
+
+        Log.a().debug(
+            '[step.%s]: hpc job id: %s -> %s',
+            self._step['name'],
+            map_item['template']['output'],
+            job_id
+        )
 
         # record job info
-        map_item['run'][map_item['attempt']]['proc'] = proc
-        map_item['run'][map_item['attempt']]['pid'] = proc.pid
+        map_item['run'][map_item['attempt']]['hpc_job_id'] = job_id
 
         # set status of process
-        map_item['status'] = 'RUNNING'
-        map_item['run'][map_item['attempt']]['status'] = 'RUNNING'
+        map_item['status'] = 'PENDING'
+        map_item['run'][map_item['attempt']]['status'] = 'PENDING'
 
         return True
 
@@ -324,14 +401,7 @@ class LocalStep(WorkflowStep):
             A dict of all map items and their run histories.
 
         """
-        return {
-            map_item['filename']: [
-                {
-                    'status': run_item['status'],
-                    'pid': run_item['pid']
-                } for run_item in map_item['run']
-            ] for map_item in self._map
-        }
+        return self._map
 
 
     def check_running_jobs(self):
@@ -345,45 +415,85 @@ class LocalStep(WorkflowStep):
             True.
 
         """
-        # check if procs are running, finished, or failed
+        # check if jobs are running, finished, or failed
         for map_item in self._map:
-            try:
-                if ShellWrapper.is_running(
-                        map_item['run'][map_item['attempt']]['proc']
-                ):
-                    map_item['status'] = 'RUNNING'
-                else:
-                    if map_item['run'][map_item['attempt']]['proc'].returncode:
+            if map_item['status'] != 'FINISHED' and map_item['status'] != 'FAILED':
+
+                try:
+                    # can only get job status if it has not already been disposed with "wait"
+                    status = self._slurm['drmaa_session'].jobStatus(
+                        map_item['run'][map_item['attempt']]['hpc_job_id']
+                    )
+                    map_item['status'] = self._job_status_map[status]
+
+                except drmaa.DrmCommunicationException as err:
+                    msg = 'cannot get job status for step "{}" [{}]'\
+                            .format(self._step['name'], str(err))
+                    Log.a().warning(msg)
+                    map_item['status'] = 'UNKNOWN'
+
+                if map_item['status'] == 'FINISHED' or map_item['status'] == 'FAILED':
+                    # check exit status
+                    job_info = self._slurm['drmaa_session'].wait(
+                        map_item['run'][map_item['attempt']]['hpc_job_id'],
+                        self._slurm['drmaa_session'].TIMEOUT_NO_WAIT
+                    )
+                    Log.a().debug(
+                        '[step.%s]: exit status: %s -> %s',
+                        self._step['name'],
+                        map_item['template']['output'],
+                        job_info.exitStatus
+                    )
+                    if job_info.exitStatus > 0:
+                        # job actually failed
                         map_item['status'] = 'FAILED'
-                    else:
-                        map_item['status'] = 'FINISHED'
-                map_item['run'][map_item['attempt']]['status']\
-                    = map_item['status']
-            except (OSError, AttributeError) as err:
-                Log.a().warning(
-                    'process polling failed for map item "%s" [%s]',
-                    map_item['filename'], str(err)
-                )
-                map_item['status'] = 'FAILED'
+
+            map_item['run'][map_item['attempt']]['status'] = map_item['status']
+
+            if map_item['status'] == 'FAILED' and map_item['attempt'] < 5:
+                # retry job if not at limit
+                if not self.retry_failed(map_item):
+                    Log.a().warning(
+                        '[step.%s]: cannot retry failed slurm job (%s)',
+                        self._step['name'],
+                        map_item['template']['output']
+                    )
 
         self._update_status_db(self._status, '')
 
         return True
 
 
-    def retry_failed(self):
+    def retry_failed(self, map_item):
         """
-        Retry any map-reduce jobs that failed.
-
-        This is not-yet supported for local apps.
+        Retry a job.
 
         Args:
             self: class instance.
 
         Returns:
-            False.
+            True if failed/stopped job restarted successfully
+            False if failed/stopped job not restarted due to error
 
         """
-        msg = 'retry not yet supported for local apps'
-        Log.an().error(msg)
-        return self._fatal(msg)
+        # retry job
+        Log.some().info(
+            '[step.%s]: retrying slurm job (%s), attempt number %s',
+            self._step['name'],
+            map_item['template']['output'],
+            map_item['attempt']+1
+        )
+
+        # add another run to list
+        map_item['attempt'] += 1
+        map_item['run'].append({})
+        if not self._run_map(map_item):
+            Log.a().warning(
+                '[step.%s]: cannot retry slurm job (%s), attempt number %s',
+                self._step['name'],
+                map_item['template']['output'],
+                map_item['attempt']
+            )
+            return False
+
+        return True

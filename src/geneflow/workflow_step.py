@@ -101,8 +101,8 @@ class WorkflowStep(StageableData):
 
         # map/reduce
         self._map = []
-        self._map_uri = ''  # expanded map_uri
-        self._parsed_map_uri = {}
+        self._map_uris = []  # expanded map_uris
+        self._parsed_map_uris = []
         self._replace = {}
 
         # init StageableData base class
@@ -211,13 +211,13 @@ class WorkflowStep(StageableData):
                 # check if depend URI scheme is the same as that of this
                 # step's output
                 if (
-                        self._depend_uris[depend]['scheme']
-                        != self._parsed_data_uris[self._source_context]\
+                        self._depend_uris[depend][0]['scheme']
+                        != self._parsed_data_uris[self._source_context][0]\
                             ['scheme']
                 ):
                     msg = 'incompatible scheme for depend uri {} of step {}'\
                         .format(
-                            self._depend_uris[depend]['chopped_uri'],
+                            self._depend_uris[depend][0]['chopped_uri'],
                             depend
                         )
                     Log.an().error(msg)
@@ -253,28 +253,27 @@ class WorkflowStep(StageableData):
         """
         if not self._step['map']['uri']:
             # map URI is an optional definition field
-            self._map_uri = ''
+            self._map_uri = []
         else:
             match = re.match(r'\${([^{}]+)->([^{}]+)}', self._step['map']['uri'])
             if match:
                 if match.group(1) == 'workflow': # use workflow-level input uri
                     # check if uri name is in input list
                     if match.group(2) in self._inputs:
-                        # make sure the input URI to be used as the map URI
-                        # is valid
-                        self._parsed_map_uri = URIParser.parse(
-                            self._inputs[match.group(2)]
-                        )
-                        if not self._parsed_map_uri:
-                            msg = 'invalid map uri for inputs.{}: {}'\
-                                .format(
-                                    match.group(2),
-                                    self._inputs[match.group(2)]
-                                )
-                            Log.an().error(msg)
-                            return self._fatal(msg)
-
-                        self._map_uri = self._parsed_map_uri['chopped_uri']
+                        # make sure the input URIs to be used as the map URIs
+                        # are valid
+                        for input_uri in self._inputs[match.group(2)]:
+                            parsed_map_uri = URIParser.parse(input_uri)
+                            if not parsed_map_uri:
+                                msg = 'invalid map uri for inputs.{}: {}'\
+                                    .format(
+                                        match.group(2),
+                                        input_uri
+                                    )
+                                Log.an().error(msg)
+                                return self._fatal(msg)
+                            self._parsed_map_uris.append(parsed_map_uri)
+                            self._map_uris.append(parsed_map_uri['chopped_uri'])
 
                     else:
                         msg = 'invalid template reference to input: {}'\
@@ -286,10 +285,12 @@ class WorkflowStep(StageableData):
                     # check if previous step is a dependency
                     if match.group(1) in self._step['depend']:
                         if match.group(2) == 'output':
-                            self._map_uri = self._depend_uris[match.group(1)]\
-                                ['chopped_uri']
-                            self._parsed_map_uri \
-                                = self._depend_uris[match.group(1)]
+                            self._map_uris.append(
+                                self._depend_uris[match.group(1)][0]['chopped_uri']
+                            )
+                            self._parsed_map_uris.append(
+                                self._depend_uris[match.group(1)][0]
+                            )
 
                         else:
                             msg = 'invalid template reference, must be "output": {}'\
@@ -363,10 +364,11 @@ class WorkflowStep(StageableData):
             return pattern.sub(lambda x: rep_dict[x.group(0)], string)
 
         # iterate map items
-        if self._map_uri == '':
+        if self._map_uris == []:
             # no mapping, run only one job
             self._map = [{
                 'filename': 'root',
+                'chopped_uri': '',
                 'replace': {},
                 'template': {},
                 'status': 'PENDING',
@@ -378,29 +380,30 @@ class WorkflowStep(StageableData):
             # list uri contents and place into matched files
             file_list = self._get_map_uri_list()
             if file_list is False:
-                msg = 'cannot get list of items from map uri: {}'.format(
-                    self._map_uri
+                msg = 'cannot get list of items from map uris: {}'.format(
+                    self._map_uris
                 )
                 Log.an().error(msg)
                 return self._fatal(msg)
 
             if file_list == []: # this folder should never be empty
                 msg = 'map uri contents cannot be empty: {}'.format(
-                    self._map_uri
+                    self._map_uris
                 )
                 Log.an().error(msg)
                 return self._fatal(msg)
 
-            for filename in file_list:
+            for f in file_list:
                 # check if file matches regex
-                match = re.match(self._step['map']['regex'], filename)
+                match = re.match(self._step['map']['regex'], f['filename'])
                 if match:
                     groups = list(match.groups())
                     replace = {}
                     for i, group in enumerate(groups):
                         replace[str('${'+str(i+1)+'}')] = str(group)
                     self._map.append({
-                        'filename': filename,
+                        'filename': f['filename'],
+                        'chopped_uri': f['chopped_uri'],
                         'replace': replace,
                         'template': {},
                         'status': 'PENDING',
@@ -412,7 +415,7 @@ class WorkflowStep(StageableData):
                 msg = (
                     'map uri contents must include at least'
                     ' one item matching regex: {}'
-                ).format(self._map_uri)
+                ).format(self._map_uris)
                 Log.an().error(msg)
                 return self._fatal(msg)
 
@@ -420,6 +423,8 @@ class WorkflowStep(StageableData):
         for map_item in self._map:
             replace = map_item['replace'].copy()
             replace.update(self._replace)
+            ##### replace map uri base with value corresponding to map item
+            replace[self._step['map']['uri']] = map_item['chopped_uri']
             for template_key in self._step['template']:
                 if isinstance(self._step['template'][template_key], str):
                     map_item['template'][template_key] = multiple_replace(
@@ -464,7 +469,7 @@ class WorkflowStep(StageableData):
                         # replace with workflow-level input or parameter
                         if match[1] in self._inputs:
                             self._replace[str(key)] \
-                                = str(self._inputs[match[1]])
+                                = str(self._inputs[match[1]][0])
 
                         elif match[1] in self._parameters:
                             self._replace[str(key)] \
@@ -483,7 +488,7 @@ class WorkflowStep(StageableData):
                         if match[0] in self._step['depend']:
                             if match[1] == 'output':
                                 self._replace[str(key)] \
-                                    = self._depend_uris[match[0]]\
+                                    = self._depend_uris[match[0]][0]\
                                         ['chopped_uri']
 
                             else:
@@ -684,15 +689,19 @@ class WorkflowStep(StageableData):
             # all jobs must be finished
             Log.some().info('[step.%s]: checkpoint: all jobs must finish', self._step['name'])
             return all(finished)
-        elif checkpoint == 'none':
+
+        if checkpoint == 'none':
             # no jobs have to be finished
             Log.some().info('[step.%s]: checkpoint: jobs do not have to finish', self._step['name'])
             return True
-        else:
-            # at least one job must be finished
-            # default to 'any' if anything other than 'all', 'any', or 'none is used
-            Log.some().info('[step.%s]: checkpoint: at least one job must finish', self._step['name'])
-            return any(finished)
+
+        # at least one job must be finished
+        # default to 'any' if anything other than 'all', 'any', or 'none is used
+        Log.some().info(
+            '[step.%s]: checkpoint: at least one job must finish',
+            self._step['name']
+        )
+        return any(finished)
 
 
     def get_status(self):

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2020/12/18 - v2.2.0: major enhancement release
+
+1. Major enhancement: add support for running workflows with SLURM HPC scheduler.
+
+2. Major enhancement: add support for specifying multiple paths per input.
+
+3. Fix bug: catch DRMAA communication exception when submitting jobs.
+
 
 ## 2020/11/18 - v2.1.0: enhancement and bug fix release
 
