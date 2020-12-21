@@ -283,7 +283,7 @@ class WorkflowDAG:
                 msg = 'cannot import context-specific step module: {} [{}]'\
                     .format(mod_name, str(err))
                 Log.an().error(msg)
-                raise WorkflowDAGException(msg)
+                raise WorkflowDAGException(msg) from err
 
             try:
                 step_class = getattr(step_mod, cls_name)
@@ -291,7 +291,7 @@ class WorkflowDAG:
                 msg = 'cannot import context-specific step class: {} [{}]'\
                     .format(cls_name, str(err))
                 Log.an().error(msg)
-                raise WorkflowDAGException(msg)
+                raise WorkflowDAGException(msg) from err
 
             # reference to step class
             self._context_classes[context] = step_class
@@ -332,19 +332,18 @@ class WorkflowDAG:
                 if node['type'] == 'input':
                     if node['source_context'] == context:
                         # use original input URI
-                        parsed_uri = URIParser.parse(
-                            self._workflow['inputs'][node['name']]['value']
-                        )
-                        if not parsed_uri:
-                            msg = 'invalid input uri: {}'.format(
-                                self._workflow['inputs'][node['name']]['value']
-                            )
-                            raise WorkflowDAGException(msg)
+                        self._context_uris['inputs'][context][node['name']] = []
+                        self._parsed_context_uris['inputs'][context][node['name']] = []
+                        for uri in self._workflow['inputs'][node['name']]['value']:
+                            parsed_uri = URIParser.parse(uri)
+                            if not parsed_uri:
+                                msg = 'invalid input uri: {}'.format(uri)
+                                raise WorkflowDAGException(msg)
 
-                        self._context_uris['inputs'][context][node['name']]\
-                            = parsed_uri['chopped_uri']
-                        self._parsed_context_uris['inputs'][context]\
-                            [node['name']] = parsed_uri
+                            self._context_uris['inputs'][context][node['name']]\
+                                .append(parsed_uri['chopped_uri'])
+                            self._parsed_context_uris['inputs'][context][node['name']]\
+                                .append(parsed_uri)
 
                     else:
                         # skip if _parsed_job_work_uri is not defined for this context
@@ -373,26 +372,25 @@ class WorkflowDAG:
                             raise WorkflowDAGException(msg)
 
                         # switch input URI base
-                        switched_uri = URIParser.switch_context(
-                            self._workflow['inputs'][node['name']]['value'],
-                            new_base_uri
-                        )
-                        if not switched_uri:
-                            msg = (
-                                'cannot switch input uri context to '
-                                'new base URI: {}->{}'
-                            ).format(
-                                self._workflow['inputs'][node['name']]\
-                                    ['value'],
+                        self._context_uris['inputs'][context][node['name']] = []
+                        self._parsed_context_uris['inputs'][context][node['name']] = []
+                        for uri in self._workflow['inputs'][node['name']]['value']:
+                            switched_uri = URIParser.switch_context(
+                                uri,
                                 new_base_uri
                             )
-                            Log.an().error(msg)
-                            raise WorkflowDAGException(msg)
+                            if not switched_uri:
+                                msg = (
+                                    'cannot switch input uri context to '
+                                    'new base URI: {}->{}'
+                                ).format(uri, new_base_uri)
+                                Log.an().error(msg)
+                                raise WorkflowDAGException(msg)
 
-                        self._context_uris['inputs'][context][node['name']]\
-                            = switched_uri['chopped_uri']
-                        self._parsed_context_uris['inputs'][context]\
-                            [node['name']] = switched_uri
+                            self._context_uris['inputs'][context][node['name']]\
+                                .append(switched_uri['chopped_uri'])
+                            self._parsed_context_uris['inputs'][context][node['name']]\
+                                .append(switched_uri)
 
         for context in {
                 Contexts.get_data_scheme_of_exec_context(con)
@@ -407,14 +405,14 @@ class WorkflowDAG:
                 node = self._graph.nodes[node_name]
                 if node['type'] == 'step':
                     self._context_uris['steps'][context][node['name']]\
-                        = '{}/{}'.format(
+                        = ['{}/{}'.format(
                             self._parsed_job_work_uri[context]['chopped_uri'],
                             slugify(node['name'], regex_pattern=r'[^-a-z0-9_]+')
-                        )
+                        )]
                     self._parsed_context_uris['steps'][context][node['name']]\
-                        = URIParser.parse(
-                            self._context_uris['steps'][context][node['name']]
-                        )
+                        = [URIParser.parse(
+                            self._context_uris['steps'][context][node['name']][0]
+                        )]
 
         # init final contexts for steps
         for node_name in self._topo_sort:
@@ -423,14 +421,14 @@ class WorkflowDAG:
 
             if node['type'] == 'step':
                 self._context_uris['steps']['final'][node['name']]\
-                    = '{}/{}'.format(
+                    = ['{}/{}'.format(
                         self._parsed_job_output_uri['chopped_uri'],
                         slugify(node['name'], regex_pattern=r'[^-a-z0-9_]+')
-                    )
+                    )]
                 self._parsed_context_uris['steps']['final'][node['name']]\
-                    = URIParser.parse(
-                        self._context_uris['steps']['final'][node['name']]
-                    )
+                    = [URIParser.parse(
+                        self._context_uris['steps']['final'][node['name']][0]
+                    )]
 
 
     def _init_graph_structure(self):
@@ -480,13 +478,15 @@ class WorkflowDAG:
                     input_name, str(err)
                 )
                 Log.an().error(msg)
-                raise WorkflowDAGException(msg)
+                raise WorkflowDAGException(msg) from err
 
         # add empty step nodes to graph
         for step_name, step in self._workflow['steps'].items():
 
             # extract the step source context
-            source_data_context = Contexts.get_data_scheme_of_exec_context(step['execution']['context'])
+            source_data_context = Contexts.get_data_scheme_of_exec_context(
+                step['execution']['context']
+            )
             if not source_data_context:
                 msg = 'invalid execution context ({}) for step {}'.format(
                     step['execution']['context'], step_name
@@ -514,7 +514,7 @@ class WorkflowDAG:
                     step_name, str(err)
                 )
                 Log.an().error(msg)
-                raise WorkflowDAGException(msg)
+                raise WorkflowDAGException(msg) from err
 
         # create graph edges and determine contexts for each node based on
         #   dependencies
@@ -543,7 +543,7 @@ class WorkflowDAG:
                                 'node "{}" [{}]'
                             ).format(input_node, step_node, str(err))
                             Log.an().error(msg)
-                            raise WorkflowDAGException(msg)
+                            raise WorkflowDAGException(msg) from err
 
                         # add context key to dict for input node
                         self._graph.nodes[input_node]['contexts'][
@@ -582,7 +582,7 @@ class WorkflowDAG:
                             'node "{}" [{}]'
                         ).format(depend_node, step_node, str(err))
                         Log.an().error(msg)
-                        raise WorkflowDAGException(msg)
+                        raise WorkflowDAGException(msg) from err
 
                     # add context key to dict for depend node
                     self._graph.nodes[depend_node]['contexts'][
@@ -617,7 +617,7 @@ class WorkflowDAG:
                         node['source_context'], str(err)
                     )
                     Log.an().error(msg)
-                    raise WorkflowDAGException(msg)
+                    raise WorkflowDAGException(msg) from err
 
                 # construct other context URIs
                 for context in node['contexts']:
@@ -634,7 +634,7 @@ class WorkflowDAG:
                                 context, str(err)
                             )
                             Log.an().error(msg)
-                            raise WorkflowDAGException(msg)
+                            raise WorkflowDAGException(msg) from err
 
                 # create instance of WorkflowInput class
                 node['node'] = WorkflowInput(
@@ -675,7 +675,7 @@ class WorkflowDAG:
                         node['source_context'], str(err)
                     )
                     Log.an().error(msg)
-                    raise WorkflowDAGException(msg)
+                    raise WorkflowDAGException(msg) from err
 
                 # construct other context URIs
                 for context in node['contexts']:
@@ -692,7 +692,7 @@ class WorkflowDAG:
                                 context, str(err)
                             )
                             Log.an().error(msg)
-                            raise WorkflowDAGException(msg)
+                            raise WorkflowDAGException(msg) from err
 
                 # create instance of WorkflowStep class depending on context
                 node['node'] = self._context_classes[node['exec_context']](
