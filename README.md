@@ -50,7 +50,7 @@ If you need to install GeneFlow, it is recommended to use a Python3 virtual envi
 3.  Install GeneFlow:
 
     ```
-    pip3 install ./geneflow
+    pip3 install ./geneflow2
     ```
 
 4.  Test the installation by running the GeneFlow CLI:
