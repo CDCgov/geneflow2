@@ -1,5 +1,10 @@
 # Changelog
 
+## 2021/01/20 - v2.2.1: bug fix release
+
+1. Fix bug: parse input data context correctly as an array value
+
+
 ## 2020/12/18 - v2.2.0: major enhancement release
 
 1. Major enhancement: add support for running workflows with SLURM HPC scheduler.

@@ -452,11 +452,11 @@ class WorkflowDAG:
 
             # extract the input source context
             parsed_input_uri = URIParser.parse(
-                self._workflow['inputs'][input_name]['value']
+                self._workflow['inputs'][input_name]['value'][0]
             )
             if not parsed_input_uri:
                 msg = 'invalid input uri: {}'.format(
-                    self._workflow['inputs'][input_name]['value']
+                    self._workflow['inputs'][input_name]['value'][0]
                 )
                 Log.an().error(msg)
                 raise WorkflowDAGException(msg)
