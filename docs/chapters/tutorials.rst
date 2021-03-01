@@ -19,3 +19,4 @@ The following tutorials provide detailed examples for creating and running GeneF
    tutorials/branching-workflow
    tutorials/app-exec-container
    tutorials/build-app-container
+   tutorials/tapis-execution
