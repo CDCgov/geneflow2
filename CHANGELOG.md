@@ -10,6 +10,8 @@
 
 4. Add extras to Python setup [tapis,hpc].
 
+5. Fix bug: detect and prevent retries of 404 errors in Tapis/Agave calls.
+
 
 ## 2021/01/20 - v2.2.1: bug fix release
 
