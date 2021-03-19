@@ -59,6 +59,10 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=INSTALL_REQUIRES,
+    extras_require={
+        'tapis': ['agavepy==1.0.0a11'],
+        'hpc': ['drmaa']
+    },
     python_requires=PYTHON_REQUIRES,
     cmdclass={
         'develop': PostDevelopCommand,

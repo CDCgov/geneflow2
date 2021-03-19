@@ -135,7 +135,7 @@ class AgaveWrapper:
                                             )
                                     )
 
-                            if str(err).startswith('404'):
+                            if '404' in str(err):
                                 if not self._silent_404:
                                     Log.a().warning('agave file/dir/object not found [%s]', str(err))
 
