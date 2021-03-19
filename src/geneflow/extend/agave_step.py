@@ -262,9 +262,9 @@ class AgaveStep(WorkflowStep):
         parameters = {}
         for param_key in self._app['parameters']:
             if param_key in map_item['template']:
-                if self._app['parameters']['type'] in ['int', 'long']:
+                if self._app['parameters'][param_key]['type'] in ['int', 'long']:
                     parameters[param_key] = int(map_item['template'][param_key])
-                elif self._app['parameters']['type'] == ['float', 'double']:
+                elif self._app['parameters'][param_key]['type'] == ['float', 'double']:
                     parameters[param_key] = float(map_item['template'][param_key])
                 else:
                     parameters[param_key] = str(map_item['template'][param_key])
