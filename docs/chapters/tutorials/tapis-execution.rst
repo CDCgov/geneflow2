@@ -69,11 +69,11 @@ Create the GeneFlow agave-params file with the following contents. Replace `[use
       executionSystem: cobra-hpc-aspen-[username]-[date]
 
       # location of your agave home directory
-      deploymentSystem: cobra-default-public-storage
+      deploymentSystem: tapis-default-public-storage
 
       # Apps directory where app assets will be uploaded.
       # This must be an absolute path.
-      appsDir: /[username]ktr2/apps-gf
+      appsDir: /[username]/apps-gf
 
       # location of workflow test data, absolute path.
       testDataDir: /[username]/testdata-gf
@@ -88,6 +88,6 @@ Run the workflow, replace `[username]` with your username:
 
 .. code-block:: bash
 
-    gf --log-level debug run ./bwa-gf2 -o ./output -n test-agave -w agave://cobra-default-public-storage/[username]/.geneflow/work --in.files ./bwa-gf2/data/reads --in.reference ./bwa-gf2/data/reference/poliovirus_strain_Sabin1.fasta --ec default:agave --ep default.slots:2
+    gf --log-level debug run ./bwa-gf2 -o ./output -n test-agave -w agave://tapis-default-public-storage/[username]/.geneflow/work --in.files ./bwa-gf2/data/reads --in.reference ./bwa-gf2/data/reference/poliovirus_strain_Sabin1.fasta --ec default:agave --ep default.slots:2
 
 
