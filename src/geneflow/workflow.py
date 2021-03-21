@@ -866,6 +866,8 @@ class Workflow:
         else:
             msg_headers = {}
 
+        Log.some().info('message headers: %s', str(msg_headers))
+
         for notify in self._job['notifications']:
             Log.some().info(
                 'sending notification(s) to %s @ %s',
