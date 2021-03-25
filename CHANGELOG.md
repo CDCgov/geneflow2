@@ -1,8 +1,23 @@
 # Changelog
 
+## 2021/03/24 - v2.3.0: maintenance release
+
+1. Remove old test suite.
+
+2. Update Dockerfile to latest base container versions.
+
+3. Update agavepy library.
+
+4. Add extras to Python setup [tapis,hpc].
+
+5. Fix bug: detect and prevent retries of 404 errors in Tapis/Agave calls.
+
+6. Fix bug: cast variables to correct data types for Tapis app definitions.
+
+
 ## 2021/01/20 - v2.2.1: bug fix release
 
-1. Fix bug: parse input data context correctly as an array value
+1. Fix bug: parse input data context correctly as an array value.
 
 
 ## 2020/12/18 - v2.2.0: major enhancement release
