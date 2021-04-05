@@ -110,7 +110,8 @@
         {%- set run_type = 'shell' -%}
     {%- endif -%}
     {%- if run_type in ['singularity','docker'] -%}
-        RUN_FULL='{{ run.run }}'; eval "RUN_LIST=(${RUN_FULL})"; RUN=${RUN_LIST[0]};{{ ' ' -}}
+        fnrun{{ loop_index }}() { echo "{{ run.run }}" | sed 's/>/\\>/g' | sed 's/</\\</g' | sed 's/|/\\|/g'; };{{ ' ' -}}
+        RUN_FULL='{{ run.run }}'; eval "RUN_LIST=($(fnrun{{ loop_index }}))"; RUN=${RUN_LIST[0]};{{ ' ' -}}
         echo "RUN FULL: ${RUN_FULL}";{{ ' ' -}}
         echo "RUN: ${RUN}";{{ ' ' -}}
         for (( ri=1; ri<{{ '${#' }}RUN_LIST[@]}; ri++ )); do{{ ' ' -}}
