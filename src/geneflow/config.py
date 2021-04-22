@@ -69,6 +69,7 @@ AGAVE_SCHEMA = {
             'username': {'type': 'string', 'required': True},
             'password': {'type': 'string', 'required': True},
             'token_username': {'type': 'string'},
+            'domain': {'type': 'string'},
             'retry': {'type': 'integer', 'default': 5},
             'retry_delay': {'type': 'integer', 'default': 3},
             'token_retry': {'type': 'integer', 'default': 3},

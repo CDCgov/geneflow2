@@ -105,8 +105,10 @@ class AgaveWrapper:
                                         api_server=that._config['server'],
                                         username=that._config['username'],
                                         password=that._config['password'],
-                                        token_username=that._config[
-                                            'token_username'
+                                        token_username='{}{}{}'.format(
+                                            that._config['domain'],
+                                            '/' if that._config['domain'] else '',
+                                            that._config['token_username']
                                         ],
                                         client_name=that._config['client'],
                                         api_key=that._config['key'],
@@ -189,7 +191,11 @@ class AgaveWrapper:
                 api_server=self._config['server'],
                 username=self._config['username'],
                 password=self._config['password'],
-                token_username=self._config['token_username'],
+                token_username='{}{}{}'.format(
+                    self._config['domain'],
+                    '/' if self._config['domain'] else '',
+                    self._config['token_username']
+                ],
                 client_name=self._config['client'],
                 api_key=self._config['key'],
                 api_secret=self._config['secret'],
