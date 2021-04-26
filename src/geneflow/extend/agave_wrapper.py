@@ -99,17 +99,20 @@ class AgaveWrapper:
                                 # create new token
                                 if that._config['connection_type']\
                                         == 'impersonate':
+                                    token_username='{}{}{}'.format(
+                                        that._config['domain'],
+                                        '/' if that._config['domain'] else '',
+                                        that._config['token_username']
+                                    )
+                                    Log.some().debug('user impersonation: %s', token_username)
+
                                     # re-init object without losing object
                                     # binding
                                     that._agave.__init__(
                                         api_server=that._config['server'],
                                         username=that._config['username'],
                                         password=that._config['password'],
-                                        token_username='{}{}{}'.format(
-                                            that._config['domain'],
-                                            '/' if that._config['domain'] else '',
-                                            that._config['token_username']
-                                        ],
+                                        token_username=token_username,
                                         client_name=that._config['client'],
                                         api_key=that._config['key'],
                                         api_secret=that._config['secret'],
