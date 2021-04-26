@@ -187,15 +187,17 @@ class AgaveWrapper:
         )
 
         if agave_connection_type == 'impersonate':
+            token_username = '{}{}{}'.format(
+                self._config['domain'],
+                '/' if self._config['domain'] else '',
+                self._config['token_username']
+            )
+            Log.some().debug('user impersonation: %s', token_username)
             self._agave = Agave(
                 api_server=self._config['server'],
                 username=self._config['username'],
                 password=self._config['password'],
-                token_username='{}{}{}'.format(
-                    self._config['domain'],
-                    '/' if self._config['domain'] else '',
-                    self._config['token_username']
-                ],
+                token_username=token_username,
                 client_name=self._config['client'],
                 api_key=self._config['key'],
                 api_secret=self._config['secret'],
