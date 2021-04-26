@@ -100,6 +100,14 @@ def init_subparser(subparsers):
         help='Agave username to impersonate'
     )
     parser.add_argument(
+        '--agave-domain',
+        type=str,
+        required=False,
+        default='',
+        dest='agave_domain',
+        help='Agave domain for user store'
+    )
+    parser.add_argument(
         '--agave-apps-prefix',
         type=str,
         required=False,
@@ -242,6 +250,7 @@ def install_workflow(args, other_args, subparser=None):
         config=config_dict,
         agave_params=agave_params,
         agave_username=args.agave_username,
+        agave_domain=args.agave_domain,
         agave_publish=args.agave_publish,
         make_apps=args.make_apps
     )
@@ -258,5 +267,5 @@ def install_workflow(args, other_args, subparser=None):
         if not wf_installer.upload_agave_test_data():
             Log.an().error('cannot upload agave test data')
             return False
-        
+
     return True

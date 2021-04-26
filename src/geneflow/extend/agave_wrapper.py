@@ -99,15 +99,20 @@ class AgaveWrapper:
                                 # create new token
                                 if that._config['connection_type']\
                                         == 'impersonate':
+                                    token_username='{}{}{}'.format(
+                                        that._config['domain'],
+                                        '/' if that._config['domain'] else '',
+                                        that._config['token_username']
+                                    )
+                                    Log.some().debug('user impersonation: %s', token_username)
+
                                     # re-init object without losing object
                                     # binding
                                     that._agave.__init__(
                                         api_server=that._config['server'],
                                         username=that._config['username'],
                                         password=that._config['password'],
-                                        token_username=that._config[
-                                            'token_username'
-                                        ],
+                                        token_username=token_username,
                                         client_name=that._config['client'],
                                         api_key=that._config['key'],
                                         api_secret=that._config['secret'],
@@ -185,11 +190,17 @@ class AgaveWrapper:
         )
 
         if agave_connection_type == 'impersonate':
+            token_username = '{}{}{}'.format(
+                self._config['domain'],
+                '/' if self._config['domain'] else '',
+                self._config['token_username']
+            )
+            Log.some().debug('user impersonation: %s', token_username)
             self._agave = Agave(
                 api_server=self._config['server'],
                 username=self._config['username'],
                 password=self._config['password'],
-                token_username=self._config['token_username'],
+                token_username=token_username,
                 client_name=self._config['client'],
                 api_key=self._config['key'],
                 api_secret=self._config['secret'],
