@@ -112,13 +112,9 @@
     {%- if run_type in ['singularity','docker'] -%}
         fnrun{{ loop_index }}() { echo "{{ run.run }}" | sed 's/>/\\>/g' | sed 's/</\\</g' | sed 's/|/\\|/g'; };{{ ' ' -}}
         RUN_FULL='{{ run.run }}'; eval "RUN_LIST=($(fnrun{{ loop_index }}))"; RUN=${RUN_LIST[0]};{{ ' ' -}}
-        echo "RUN FULL: ${RUN_FULL}";{{ ' ' -}}
-        echo "RUN: ${RUN}";{{ ' ' -}}
         for (( ri=1; ri<{{ '${#' }}RUN_LIST[@]}; ri++ )); do{{ ' ' -}}
-            echo "item: ${RUN_LIST[$ri]}";{{ ' ' -}}
             if [ "${RUN_LIST[$ri]:0:1}" = "^" ]; then{{ ' ' -}}
                 RARG="${RUN_LIST[$ri]#?}";{{ ' ' -}}
-                echo "RARG: ${RARG}";{{ ' ' -}}
                 RARG_FULL=$(readlink -f "${RARG}");{{ ' ' -}}
                 RARG_DIR=$(dirname "${RARG}");{{ ' ' -}}
                 RARG_BASE=$(basename "${RARG}");{{ ' ' -}}
