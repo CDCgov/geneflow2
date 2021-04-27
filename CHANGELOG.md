@@ -7,6 +7,8 @@
 
 2. Use bash login shell to ensure PATH vars propagate to cluster nodes.
 
+3. Major enhancement: add support for specifying container mounts within app commands.
+
 
 ## 2021/03/24 - v2.3.0: maintenance release
 
