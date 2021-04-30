@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 2021/05/05 - v2.4.0: enhancement release
+## 2021/04/30 - v2.4.0: enhancement release
 
 1. Add domain to username impersonation in Agave.
 
