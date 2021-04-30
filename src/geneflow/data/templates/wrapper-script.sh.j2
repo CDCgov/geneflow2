@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 
 # {{ description }} wrapper script
 
@@ -105,8 +105,30 @@
 {%- macro exec_item(run, loop_index, pipe, loop_last) -%}
     MNT=""; ARG="";{{ ' ' }}
     {%- set run_type = run.type -%}
+    {%- set num_mount = 0 -%}
     {%- if run_type not in ['singularity','docker'] -%}
         {%- set run_type = 'shell' -%}
+    {%- endif -%}
+    {%- if run_type in ['singularity','docker'] -%}
+        fnrun{{ loop_index }}() { echo "{{ run.run }}" | sed 's/>/\\>/g' | sed 's/</\\</g' | sed 's/|/\\|/g'; };{{ ' ' -}}
+        RUN_FULL='{{ run.run }}'; eval "RUN_LIST=($(fnrun{{ loop_index }}))"; RUN=${RUN_LIST[0]};{{ ' ' -}}
+        for (( ri=1; ri<{{ '${#' }}RUN_LIST[@]}; ri++ )); do{{ ' ' -}}
+            if [ "${RUN_LIST[$ri]:0:1}" = "^" ]; then{{ ' ' -}}
+                RARG="${RUN_LIST[$ri]#?}";{{ ' ' -}}
+                RARG_FULL=$(readlink -f "${RARG}");{{ ' ' -}}
+                RARG_DIR=$(dirname "${RARG}");{{ ' ' -}}
+                RARG_BASE=$(basename "${RARG}");{{ ' ' -}}
+                {%- if run_type == 'singularity' -%}
+                    MNT="${MNT} -B ";{{ ' ' -}}
+                {%- else -%}
+                    MNT="${MNT} -v ";{{ ' ' -}}
+                {%- endif -%}
+                MNT="${MNT}\"${RARG_DIR}:/data${ri}_r\"";{{ ' ' -}}
+                ARG="${ARG} \"/data${ri}_r/${RARG_BASE}\"";{{ ' ' -}}
+            else{{ ' ' -}}
+                ARG="${ARG} ${RUN_LIST[$ri]}";{{ ' ' -}}
+            fi;{{ ' ' -}}
+        done;{{ ' ' -}}
     {%- endif -%}
     {%- if run.args -%}
         {%- for arg in run.args -%}
@@ -151,7 +173,7 @@
         {%- else -%}
             -s exec{{ ' ' }}
         {%- endif -%}
-        ${MNT} {{ run.image }} {{ run.run }} ${ARG}";{{ ' ' }}
+        ${MNT} {{ run.image }} ${RUN} ${ARG}";{{ ' ' }}
     {%- elif run_type == 'docker' -%}
         CMD{{ loop_index }}="docker{{ ' ' }}
         {%- if run.options -%}
@@ -159,7 +181,7 @@
         {%- else -%}
             run --rm{{ ' ' }}
         {%- endif -%}
-        ${MNT} {{ run.image }} {{ run.run }} ${ARG}";{{ ' ' }}
+        ${MNT} {{ run.image }} ${RUN} ${ARG}";{{ ' ' }}
     {%- else -%}
         CMD{{ loop_index }}="{{ run.run }} ${ARG}";{{ ' ' }}
     {%- endif -%}

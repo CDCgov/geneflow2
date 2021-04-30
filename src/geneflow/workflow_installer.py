@@ -48,6 +48,7 @@ class WorkflowInstaller:
             config=None,
             agave_params=None,
             agave_username=None,
+            agave_domain=None,
             agave_publish=False,
             make_apps=True
     ):
@@ -88,6 +89,7 @@ class WorkflowInstaller:
         self._config = config
         self._agave_params = agave_params
         self._agave_username = agave_username
+        self._agave_domain = agave_domain
         self._agave_publish = agave_publish
 
 
@@ -125,7 +127,8 @@ class WorkflowInstaller:
         # connect to agave
         if self._config and self._agave_params:
             if self._config.get('agave') and self._agave_params.get('agave'):
-                self._config['agave']['token_username'] = self._agave_username;
+                self._config['agave']['token_username'] = self._agave_username
+                self._config['agave']['domain'] = self._agave_domain
                 self._agave_wrapper = AgaveWrapper(self._config['agave'])
                 if not self._agave_wrapper.connect():
                     Log.an().error('cannot connect to agave')
