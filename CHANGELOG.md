@@ -1,8 +1,13 @@
 # Changelog
 
-## 2021/05/05 - v2.4.0: enhancement release
+
+## 2021/04/30 - v2.4.0: enhancement release
 
 1. Add domain to username impersonation in Agave.
+
+2. Use bash login shell to ensure PATH vars propagate to cluster nodes.
+
+3. Major enhancement: add support for specifying container mounts within app commands.
 
 
 ## 2021/03/24 - v2.3.0: maintenance release
