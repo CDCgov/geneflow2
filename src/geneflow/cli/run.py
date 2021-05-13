@@ -354,7 +354,7 @@ def run(args, other_args, subparser):
                 dest='no_output_hash',
                 help='No random hash for output directory'
             )
-             exec_group = dynamic_parser.add_argument_group(
+            exec_group = dynamic_parser.add_argument_group(
                 "Execution Options",
                 "Customize workflow execution"
             )
