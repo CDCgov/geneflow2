@@ -1,6 +1,11 @@
 # Changelog
 
 
+## 2021/05/14 - v2.4.1: bug fix release
+
+1. Fix bug: add no_output_hash option back to CLI.
+
+
 ## 2021/04/30 - v2.4.0: enhancement release
 
 1. Add domain to username impersonation in Agave.
