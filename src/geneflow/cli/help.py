@@ -106,6 +106,8 @@ def help_func(args, other_args, subparser=None):
     print('\t\tdefault: geneflow-job')
     print('\t-w,--work: Work directories, for temporary or intermediate data')
     print('\t\tdefault: ~/.geneflow/work')
+    print('\t--no-output-hash: Flag indicating that the output directory should NOT include a random hash')
+    print('\t\tdefault: not set, output will include random hash')
     print()
     print('Inputs: Workflow-Specific Files or Folders')
     for input_key in workflow_dict['inputs']:

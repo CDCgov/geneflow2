@@ -232,6 +232,13 @@ def run(args, other_args, subparser):
             help='Work Directory'
         )
         dynamic_parser.add_argument(
+            '--no-output-hash',
+            default=False,
+            action='store_true',
+            dest='no_output_hash',
+            help='No random hash for output directory'
+        )
+        dynamic_parser.add_argument(
             '--exec-context', '--ec',
             nargs='+',
             type=str,
@@ -340,6 +347,13 @@ def run(args, other_args, subparser):
                 default=[],
                 help='Work Directory'
             )
+            job_group.add_argument(
+                '--no-output-hash',
+                default=False,
+                action='store_true',
+                dest='no_output_hash',
+                help='No random hash for output directory'
+            )
             exec_group = dynamic_parser.add_argument_group(
                 "Execution Options",
                 "Customize workflow execution"
@@ -409,7 +423,8 @@ def run(args, other_args, subparser):
         jobs_dict,
         {
             'name': dynamic_args.name,
-            'output_uri': dynamic_args.output
+            'output_uri': dynamic_args.output,
+            'no_output_hash': dynamic_args.no_output_hash
         }
     )
 
