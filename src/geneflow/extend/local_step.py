@@ -178,6 +178,7 @@ class LocalStep(WorkflowStep):
             # get file list from URI
             file_list = DataManager.list(
                 parsed_uri=uri,
+                inclusive=self._step['map']['inclusive'],
                 globstr=self._step['map']['glob']
             )
             if file_list is False:

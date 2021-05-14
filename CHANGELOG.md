@@ -1,6 +1,11 @@
 # Changelog
 
 
+## 2021/05/17 - v2.5.0: enhancement release
+
+1. Add 'inclusive' option to map URI.
+
+
 ## 2021/05/14 - v2.4.1: bug fix release
 
 1. Fix bug: add no_output_hash option back to CLI.
