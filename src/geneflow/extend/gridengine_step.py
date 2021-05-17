@@ -5,6 +5,7 @@ import drmaa
 import os
 from slugify import slugify
 import shutil
+from wcmatch import glob
 
 from geneflow.log import Log
 from geneflow.workflow_step import WorkflowStep
@@ -197,7 +198,6 @@ class GridengineStep(WorkflowStep):
             # get file list from URI
             file_list = DataManager.list(
                 parsed_uri=uri,
-                inclusive=self._step['map']['inclusive'],
                 globstr=self._step['map']['glob']
             )
             if file_list is False:
@@ -205,6 +205,22 @@ class GridengineStep(WorkflowStep):
                     .format(uri['chopped_uri'])
                 Log.an().error(msg)
                 return self._fatal(msg)
+
+            if self._step['map']['inclusive']:
+                # filter with glob
+                if glob.globfilter(
+                    [uri['name']],
+                    self._step['map']['glob'],
+                    flags=glob.EXTGLOB|glob.GLOBSTAR
+                ):
+                    combined_file_list.append({
+                        'chopped_uri': '{}://{}{}'.format(
+                            uri['scheme'],
+                            uri['authority'],
+                            uri['folder']
+                        ),
+                        'filename': uri['name']
+                    })
 
             for f in file_list:
                 combined_file_list.append({

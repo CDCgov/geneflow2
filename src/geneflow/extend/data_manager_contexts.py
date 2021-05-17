@@ -13,7 +13,7 @@ from geneflow.extend.agave_wrapper import AgaveWrapper
 
 ### Local data management functions and move/copy with Local as source
 
-def _list_local(uri, inclusive, globstr, local=None):
+def _list_local(uri, globstr, local=None):
     """
     List contents of local URI.
 
@@ -42,14 +42,6 @@ def _list_local(uri, inclusive, globstr, local=None):
             uri['chopped_uri'], str(err)
         )
         return False
-
-    # include main directory/item
-    inclusive_list = glob.globfilter(
-        [uri['chopped_path']], globstr, flags=glob.EXTGLOB|glob.GLOBSTAR
-    ) if inclusive else []
-
-    # remove duplicates
-    file_list = list(set.union(set(file_list), set(inclusive_list)))
 
     return file_list
 
@@ -200,7 +192,7 @@ def _move_local_local(src_uri, dest_uri, local=None):
 
 ### Agave data management functions and move/copy with Agave as source
 
-def _list_agave(uri, inclusive, globstr, agave):
+def _list_agave(uri, globstr, agave):
     """
     List contents of agave URI.
 
@@ -237,10 +229,6 @@ def _list_agave(uri, inclusive, globstr, agave):
         [str(f['path']+'/'+f['name'])[path_len:] for f in file_list],
         globstr,
         flags=glob.EXTGLOB|glob.GLOBSTAR
-    )
-
-    inclusive_list = glob.globfilter(
-        [uri['chopped_path']
     )
 
     return globbed_file_list

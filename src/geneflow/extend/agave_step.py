@@ -5,6 +5,7 @@ import pprint
 import regex as re
 from slugify import slugify
 import urllib.parse
+from wcmatch import glob
 
 from geneflow.log import Log
 from geneflow.data_manager import DataManager
@@ -209,7 +210,6 @@ class AgaveStep(WorkflowStep):
             # get file list from URI
             file_list = DataManager.list(
                 parsed_uri=uri,
-                inclusive=self._step['map']['inclusive'],
                 globstr=self._step['map']['glob'],
                 agave=self._agave
             )
@@ -218,6 +218,22 @@ class AgaveStep(WorkflowStep):
                     .format(uri['chopped_uri'])
                 Log.an().error(msg)
                 return self._fatal(msg)
+
+            if self._step['map']['inclusive']:
+                # filter with glob
+                if glob.globfilter(
+                    [uri['name']],
+                    self._step['map']['glob'],
+                    flags=glob.EXTGLOB|glob.GLOBSTAR
+                ):
+                    combined_file_list.append({
+                        'chopped_uri': '{}://{}{}'.format(
+                            uri['scheme'],
+                            uri['authority'],
+                            uri['folder']
+                        ),
+                        'filename': uri['name']
+                    })
 
             for f in file_list:
                 combined_file_list.append({
