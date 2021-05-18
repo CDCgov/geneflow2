@@ -3,7 +3,6 @@
 
 from slugify import slugify
 from wcmatch import glob
-import pprint
 
 from geneflow.log import Log
 from geneflow.workflow_step import WorkflowStep

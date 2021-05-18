@@ -11,6 +11,7 @@ try:
 except ImportError: pass
 
 from geneflow.log import Log
+from geneflow.uri_parser import URIParser
 
 
 class AgaveWrapper:
@@ -265,17 +266,22 @@ class AgaveWrapper:
             List of file names.
 
         """
-        files = [
-            {
-                'path': file_path,
-                'name': f.name,
-                'type': f.type
-            } for f in self._agave.files.list(
-                systemId=system_id,
-                filePath=file_path,
-                limit=1000000
-            ) if f.name[:1] != '.' # skip files that start with .
-        ]
+        files = []
+        file_list = self._agave.files.list(
+            systemId=system_id,
+            filePath=file_path+'/',
+            limit=1000000
+        )
+        for f in file_list:
+            if f.name[:1] != '.' and f.name != '':
+                file_uri = URIParser.parse(
+                    '{}://{}{}'.format('agave', system_id, f.path)
+                )
+                files.append({
+                    'path': file_uri['folder'],
+                    'name': file_uri['name'],
+                    'type': f.type
+                })
 
         # list all subdirectories if not at max depth
         # depth of -1 means unlimited depth
@@ -285,7 +291,7 @@ class AgaveWrapper:
                 if f['type'] == 'dir':
                     files_subdirs[f['name']] = self.files_list(
                         system_id,
-                        file_path+'/'+f['name'],
+                        f['path']+'/'+f['name'],
                         depth-1 if depth > 1 else depth
                     )
 

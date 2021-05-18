@@ -33,7 +33,7 @@ def _list_local(uri, globstr, local=None):
             item[prefix_length:] for item in glob.glob(
                 uri['chopped_path']+'/'+globstr,
                 flags=glob.EXTGLOB|glob.GLOBSTAR
-            )
+            ) if item[prefix_length:]
         ]
 
     except OSError as err:
@@ -213,7 +213,7 @@ def _list_agave(uri, globstr, agave):
 
     file_list = agave['agave_wrapper'].files_list(
         uri['authority'],
-        uri['chopped_path']+'/',
+        uri['chopped_path'],
         depth=depth
     )
 
