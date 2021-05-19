@@ -124,9 +124,10 @@ WORKFLOW_SCHEMA = {
                     'letter': {'type': 'string', 'default': ''},
                     'map': {
                         'type': 'dict',
-                        'default': {'uri': '', 'regex': '', 'glob': '*'},
+                        'default': {'uri': '', 'regex': '', 'glob': '*', 'inclusive': False},
                         'schema': {
                             'uri': {'type': 'string', 'default': ''},
+                            'inclusive': {'type': 'boolean', 'default': False},
                             'glob': {'type': 'string', 'default': '*'},
                             'regex': {'type': 'string', 'default': ''}
                         }

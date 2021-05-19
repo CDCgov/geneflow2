@@ -2,6 +2,7 @@
 
 
 from slugify import slugify
+from wcmatch import glob
 
 from geneflow.log import Log
 from geneflow.workflow_step import WorkflowStep
@@ -180,17 +181,46 @@ class LocalStep(WorkflowStep):
                 parsed_uri=uri,
                 globstr=self._step['map']['glob']
             )
+
             if file_list is False:
                 msg = 'cannot get contents of map uri: {}'\
                     .format(uri['chopped_uri'])
                 Log.an().error(msg)
                 return self._fatal(msg)
 
+            if self._step['map']['inclusive']:
+                # filter with glob
+                if glob.globfilter(
+                    [uri['name']],
+                    self._step['map']['glob'],
+                    flags=glob.EXTGLOB|glob.GLOBSTAR
+                ):
+                    combined_file_list.append({
+                        'chopped_uri': '{}://{}{}'.format(
+                            uri['scheme'],
+                            uri['authority'],
+                            uri['folder']
+                        ),
+                        'filename': uri['name']
+                    })
+
             for f in file_list:
-                combined_file_list.append({
-                    'chopped_uri': uri['chopped_uri'],
-                    'filename': f
-                })
+                if '/' in f:
+                    # reparse uri to correctly represent recursive elements
+                    new_uri = URIParser.parse('{}/{}'.format(uri['chopped_uri'], f))
+                    combined_file_list.append({
+                        'chopped_uri': '{}://{}{}'.format(
+                            new_uri['scheme'],
+                            new_uri['authority'],
+                            new_uri['folder']
+                        ),
+                        'filename': new_uri['name']
+                    })
+                else:
+                    combined_file_list.append({
+                        'chopped_uri': uri['chopped_uri'],
+                        'filename': f
+                    })
 
         return combined_file_list
 
