@@ -33,7 +33,7 @@ def _list_local(uri, globstr, local=None):
             item[prefix_length:] for item in glob.glob(
                 uri['chopped_path']+'/'+globstr,
                 flags=glob.EXTGLOB|glob.GLOBSTAR
-            )
+            ) if item[prefix_length:]
         ]
 
     except OSError as err:
