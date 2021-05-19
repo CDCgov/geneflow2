@@ -2,7 +2,6 @@
 
 import json
 import regex as re
-import pprint
 
 from geneflow.log import Log
 from geneflow.data import DataSource, DataSourceException
@@ -393,8 +392,6 @@ class WorkflowStep(StageableData):
                 )
                 Log.an().error(msg)
                 return self._fatal(msg)
-
-            pprint.pprint(file_list)
 
             for f in file_list:
                 # check if file matches regex
