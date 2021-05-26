@@ -57,10 +57,10 @@ class GridengineStep(WorkflowStep):
 
         self._job_status_map = {
             drmaa.JobState.UNDETERMINED: 'UNKNOWN',
-            drmaa.JobState.QUEUED_ACTIVE: 'PENDING',
-            drmaa.JobState.SYSTEM_ON_HOLD: 'PENDING',
-            drmaa.JobState.USER_ON_HOLD: 'PENDING',
-            drmaa.JobState.USER_SYSTEM_ON_HOLD: 'PENDING',
+            drmaa.JobState.QUEUED_ACTIVE: 'QUEUED',
+            drmaa.JobState.SYSTEM_ON_HOLD: 'QUEUED',
+            drmaa.JobState.USER_ON_HOLD: 'QUEUED',
+            drmaa.JobState.USER_SYSTEM_ON_HOLD: 'QUEUED',
             drmaa.JobState.RUNNING: 'RUNNING',
             drmaa.JobState.SYSTEM_SUSPENDED: 'RUNNING',
             drmaa.JobState.USER_SUSPENDED: 'RUNNING',

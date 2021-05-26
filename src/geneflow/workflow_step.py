@@ -86,6 +86,17 @@ class WorkflowStep(StageableData):
         # step status
         self._status = 'PENDING'
 
+        # current number of running jobs
+        self._num_running = 0
+
+        # limit the number of concurrent jobs for step
+        # 0 means no limit
+        self._throttle_limit = int(self._step['execution']['parameters'].get(
+            'throttle', 0
+        ))
+        if self._throttle_limit < 0:
+            self._throttle_limit = 0
+
         # workflow-level inputs and parameters
         self._inputs = inputs
         self._parameters = parameters
@@ -719,6 +730,25 @@ class WorkflowStep(StageableData):
         return status
 
 
+    def _is_done(self, map_item):
+        """
+        Check if item has been completed.
+
+        Args:
+            self: class instance.
+            map_item: map item object (item of self._map).
+
+        Returns:
+            True: if item is done.
+            False: if item is not done.
+
+        """
+
+        return map_item['status'] == 'FINISHED' \
+            or map_item['status'] == 'FAILED' \
+            or map_item['status'] == 'STOPPED'
+
+
     def all_done(self):
         """
         Check if all map-reduce jobs have finished.
@@ -734,10 +764,7 @@ class WorkflowStep(StageableData):
 
         """
         done = [
-            map_item['status'] == 'FINISHED'\
-            or map_item['status'] == 'FAILED'\
-            or map_item['status'] == 'STOPPED'\
-            for map_item in self._map
+            self._is_done(map_item) for map_item in self._map
         ]
 
         return all(done)

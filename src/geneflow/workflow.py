@@ -773,19 +773,23 @@ class Workflow:
 
                 # run jobs for step
                 Log.some().info('[%s]: running', node_name)
-                if not node['node'].run():
-                    msg = 'run failed for step {}'.format(node_name)
-                    Log.an().error(msg)
-                    return self._fatal(msg)
+                #if not node['node'].run():
+                #    msg = 'run failed for step {}'.format(node_name)
+                #    Log.an().error(msg)
+                #    return self._fatal(msg)
 
-                # poll until job(s) done
+                # run new jobs and poll until all job(s) done
                 while not node['node'].all_done():
+                    if not node['node'].run():
+                        msg = 'run failed for step {}'.format(node_name)
+                        Log.an().error(msg)
+                        return self._fatal(msg)
                     node['node'].check_running_jobs()
                     time.sleep(self._config['run_poll_delay'])
 
                 Log.some().debug('[%s]: all jobs complete', node_name)
 
-                # check1 if step satisfies checkpoint of all, any, or none job completion
+                # check if step satisfies checkpoint of all, any, or none job completion
                 if not node['node'].checkpoint():
                     msg = 'failed checkpoint for step {}'.format(node_name)
                     Log.an().error(msg)
