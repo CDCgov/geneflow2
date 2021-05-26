@@ -3,9 +3,11 @@
 
 import time
 
+import copy
 import requests
 from slugify import slugify
 import yaml
+import pprint
 
 from geneflow.log import Log
 from geneflow.data import DataSource, DataSourceException
@@ -364,7 +366,7 @@ class Workflow:
             step['execution'] = {
                 'context': self._job['execution']['context']['default'],
                 'method': self._job['execution']['method']['default'],
-                'parameters': self._job['execution']['parameters']['default']
+                'parameters': copy.deepcopy(self._job['execution']['parameters']['default'])
             }
             if step_name in self._job['execution']['context']:
                 step['execution']['context'] \
@@ -373,8 +375,17 @@ class Workflow:
                 step['execution']['method'] \
                     = self._job['execution']['method'][step_name]
             if step_name in self._job['execution']['parameters']:
-                step['execution']['parameters'] \
-                    = self._job['execution']['parameters'][step_name]
+                # only copy params that have been set to deleting default params
+                for param_name in self._job['execution']['parameters'][step_name]:
+                    step['execution']['parameters'][param_name] \
+                        = self._job['execution']['parameters'][step_name][param_name]
+
+            #pprint.pprint(step_name)
+            #pprint.pprint(self._workflow['steps'][step_name]['execution'])
+
+        #for step_name, step in self._workflow['steps'].items():
+            #pprint.pprint(step_name)
+            #pprint.pprint(self._workflow['steps'][step_name]['execution'])
 
         return True
 

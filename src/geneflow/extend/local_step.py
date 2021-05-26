@@ -396,15 +396,23 @@ class LocalStep(WorkflowStep):
         """
         # check if procs are running, finished, or failed
         for map_item in self._map:
-            if map_item['status'] in ['RUNNING', 'UNKNOWN']:
+            if map_item['status'] in ['RUNNING','UNKNOWN']:
                 try:
                     if not ShellWrapper.is_running(
                             map_item['run'][map_item['attempt']]['proc']
                     ):
-                        if map_item['run'][map_item['attempt']]['proc'].returncode:
+                        returncode = map_item['run'][map_item['attempt']]['proc'].returncode
+                        if returncode:
                             map_item['status'] = 'FAILED'
                         else:
                             map_item['status'] = 'FINISHED'
+
+                        Log.a().debug(
+                            '[step.%s]: exit status: %s -> %s',
+                            self._step['name'],
+                            map_item['template']['output'],
+                            returncode
+                        )
 
                         # decrease num running procs
                         if self._num_running > 0:
