@@ -12,5 +12,5 @@ from pathlib import Path
 GF_PACKAGE_PATH = Path.resolve(Path(__file__)).parents[0]
 
 # version info
-__version_info__ = ('2', '5', '0')
+__version_info__ = ('2', '6', '0')
 __version__ = '.'.join(__version_info__)
