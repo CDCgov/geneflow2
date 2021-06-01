@@ -6,7 +6,6 @@ import os
 from slugify import slugify
 import shutil
 from wcmatch import glob
-import pprint
 
 from geneflow.log import Log
 from geneflow.workflow_step import WorkflowStep
@@ -406,8 +405,6 @@ class SlurmStep(WorkflowStep):
             On failure: False.
 
         """
-        Log.some().debug('throttle: %s', self._throttle_limit)
-        Log.some().debug('num_running: %s', self._num_running)
         if self._throttle_limit > 0 and self._num_running >= self._throttle_limit:
             # throttle limit reached
             # exit without running anything new

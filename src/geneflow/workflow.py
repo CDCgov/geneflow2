@@ -7,7 +7,6 @@ import copy
 import requests
 from slugify import slugify
 import yaml
-import pprint
 
 from geneflow.log import Log
 from geneflow.data import DataSource, DataSourceException
@@ -379,13 +378,6 @@ class Workflow:
                 for param_name in self._job['execution']['parameters'][step_name]:
                     step['execution']['parameters'][param_name] \
                         = self._job['execution']['parameters'][step_name][param_name]
-
-            #pprint.pprint(step_name)
-            #pprint.pprint(self._workflow['steps'][step_name]['execution'])
-
-        #for step_name, step in self._workflow['steps'].items():
-            #pprint.pprint(step_name)
-            #pprint.pprint(self._workflow['steps'][step_name]['execution'])
 
         return True
 
@@ -782,14 +774,8 @@ class Workflow:
                     Log.an().error(msg)
                     return self._fatal(msg)
 
-                # run jobs for step
-                Log.some().info('[%s]: running', node_name)
-                #if not node['node'].run():
-                #    msg = 'run failed for step {}'.format(node_name)
-                #    Log.an().error(msg)
-                #    return self._fatal(msg)
-
                 # run new jobs and poll until all job(s) done
+                Log.some().info('[%s]: running', node_name)
                 while not node['node'].all_done():
                     if not node['node'].run():
                         msg = 'run failed for step {}'.format(node_name)
@@ -845,7 +831,6 @@ class Workflow:
                     return self._fatal(msg)
 
                 Log.some().info('[%s]: complete', node_name)
-
 
         self._update_status_db('FINISHED', '')
 

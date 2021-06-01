@@ -329,8 +329,6 @@ class LocalStep(WorkflowStep):
             On failure: False.
 
         """
-        Log.some().debug('throttle: %s', self._throttle_limit)
-        Log.some().debug('num_running: %s', self._num_running)
         if self._throttle_limit > 0 and self._num_running >= self._throttle_limit:
             # throttle limit reached
             # exit without running anything new

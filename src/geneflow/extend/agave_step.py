@@ -409,8 +409,6 @@ class AgaveStep(WorkflowStep):
             On failure: False.
 
         """
-        Log.some().debug('throttle: %s', self._throttle_limit)
-        Log.some().debug('num_running: %s', self._num_running)
         if self._throttle_limit > 0 and self._num_running >= self._throttle_limit:
             # throttle limit reached
             # exit without running anything new
@@ -482,6 +480,18 @@ class AgaveStep(WorkflowStep):
                     Log.a().warning(msg)
                     map_item['status'] = 'UNKNOWN'
 
+                if map_item['status'] in ['FINISHED','FAILED']:
+                    # status changed to finished or failed
+                    Log.a().debug(
+                        '[step.%s]: exit status: %s -> %s',
+                        self._step['name'],
+                        map_item['template']['output'],
+                        map_item['status']
+                    )
+
+                    # decrease num running procs
+                    if self._num_running > 0:
+                        self._num_running -= 1
 
             # check hpc job ids
             if (
