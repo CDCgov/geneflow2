@@ -374,7 +374,7 @@ class Workflow:
                 step['execution']['method'] \
                     = self._job['execution']['method'][step_name]
             if step_name in self._job['execution']['parameters']:
-                # only copy params that have been set to deleting default params
+                # only copy params that have been set to avoid deleting default params
                 for param_name in self._job['execution']['parameters'][step_name]:
                     step['execution']['parameters'][param_name] \
                         = self._job['execution']['parameters'][step_name][param_name]
