@@ -57,10 +57,10 @@ class SlurmStep(WorkflowStep):
 
         self._job_status_map = {
             drmaa.JobState.UNDETERMINED: 'UNKNOWN',
-            drmaa.JobState.QUEUED_ACTIVE: 'PENDING',
-            drmaa.JobState.SYSTEM_ON_HOLD: 'PENDING',
-            drmaa.JobState.USER_ON_HOLD: 'PENDING',
-            drmaa.JobState.USER_SYSTEM_ON_HOLD: 'PENDING',
+            drmaa.JobState.QUEUED_ACTIVE: 'QUEUED',
+            drmaa.JobState.SYSTEM_ON_HOLD: 'QUEUED',
+            drmaa.JobState.USER_ON_HOLD: 'QUEUED',
+            drmaa.JobState.USER_SYSTEM_ON_HOLD: 'QUEUED',
             drmaa.JobState.RUNNING: 'RUNNING',
             drmaa.JobState.SYSTEM_SUSPENDED: 'RUNNING',
             drmaa.JobState.USER_SUSPENDED: 'RUNNING',
@@ -384,17 +384,18 @@ class SlurmStep(WorkflowStep):
         map_item['run'][map_item['attempt']]['hpc_job_id'] = job_id
 
         # set status of process
-        map_item['status'] = 'PENDING'
-        map_item['run'][map_item['attempt']]['status'] = 'PENDING'
+        map_item['status'] = 'QUEUED'
+        map_item['run'][map_item['attempt']]['status'] = 'QUEUED'
 
         return True
 
 
     def run(self):
         """
-        Execute shell scripts for each of the map items.
+        Execute shell scripts for each of the map items, as long as
+        number of running jobs is < throttle limit.
 
-        Then store PIDs in run detail.
+        Then store HPC job numbers in run detail.
 
         Args:
             self: class instance.
@@ -404,13 +405,29 @@ class SlurmStep(WorkflowStep):
             On failure: False.
 
         """
-        for map_item in self._map:
+        if self._throttle_limit > 0 and self._num_running >= self._throttle_limit:
+            # throttle limit reached
+            # exit without running anything new
+            return True
 
-            if not self._run_map(map_item):
-                msg = 'cannot run script for map item "{}"'\
-                    .format(map_item['filename'])
-                Log.an().error(msg)
-                return self._fatal(msg)
+        for map_item in self._map:
+            if map_item['status'] == 'PENDING':
+                if not self._run_map(map_item):
+                    msg = 'cannot queue job for map item "{}"'\
+                        .format(map_item['filename'])
+                    Log.an().error(msg)
+                    map_item['status'] = 'FAILED'
+                    map_item['run'][map_item['attempt']]['status']\
+                        = map_item['status']
+
+                else:
+                    self._num_running += 1
+                    if (
+                        self._throttle_limit > 0
+                        and self._num_running >= self._throttle_limit
+                    ):
+                        # reached throttle limit
+                        break
 
         self._update_status_db('RUNNING', '')
 
@@ -446,8 +463,7 @@ class SlurmStep(WorkflowStep):
         """
         # check if jobs are running, finished, or failed
         for map_item in self._map:
-            if map_item['status'] != 'FINISHED' and map_item['status'] != 'FAILED':
-
+            if map_item['status'] not in ['FINISHED','FAILED','PENDING']:
                 try:
                     # can only get job status if it has not already been disposed with "wait"
                     status = self._slurm['drmaa_session'].jobStatus(
@@ -461,7 +477,7 @@ class SlurmStep(WorkflowStep):
                     Log.a().warning(msg)
                     map_item['status'] = 'UNKNOWN'
 
-                if map_item['status'] == 'FINISHED' or map_item['status'] == 'FAILED':
+                if map_item['status'] in ['FINISHED','FAILED']:
                     # check exit status
                     job_info = self._slurm['drmaa_session'].wait(
                         map_item['run'][map_item['attempt']]['hpc_job_id'],
@@ -477,16 +493,23 @@ class SlurmStep(WorkflowStep):
                         # job actually failed
                         map_item['status'] = 'FAILED'
 
+                    # decrease num running procs
+                    if self._num_running > 0:
+                        self._num_running -= 1
+
             map_item['run'][map_item['attempt']]['status'] = map_item['status']
 
             if map_item['status'] == 'FAILED' and map_item['attempt'] < 5:
-                # retry job if not at limit
-                if not self.retry_failed(map_item):
-                    Log.a().warning(
-                        '[step.%s]: cannot retry failed slurm job (%s)',
-                        self._step['name'],
-                        map_item['template']['output']
-                    )
+                if self._throttle_limit == 0 or self._num_running < self._throttle_limit:
+                    # retry job if not at retry or throttle limit
+                    if not self.retry_failed(map_item):
+                        Log.a().warning(
+                            '[step.%s]: cannot retry failed slurm job (%s)',
+                            self._step['name'],
+                            map_item['template']['output']
+                        )
+                    else:
+                        self._num_running += 1
 
         self._update_status_db(self._status, '')
 

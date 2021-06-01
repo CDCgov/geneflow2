@@ -3,6 +3,7 @@
 
 import time
 
+import copy
 import requests
 from slugify import slugify
 import yaml
@@ -364,7 +365,7 @@ class Workflow:
             step['execution'] = {
                 'context': self._job['execution']['context']['default'],
                 'method': self._job['execution']['method']['default'],
-                'parameters': self._job['execution']['parameters']['default']
+                'parameters': copy.deepcopy(self._job['execution']['parameters']['default'])
             }
             if step_name in self._job['execution']['context']:
                 step['execution']['context'] \
@@ -373,8 +374,10 @@ class Workflow:
                 step['execution']['method'] \
                     = self._job['execution']['method'][step_name]
             if step_name in self._job['execution']['parameters']:
-                step['execution']['parameters'] \
-                    = self._job['execution']['parameters'][step_name]
+                # only copy params that have been set to avoid deleting default params
+                for param_name in self._job['execution']['parameters'][step_name]:
+                    step['execution']['parameters'][param_name] \
+                        = self._job['execution']['parameters'][step_name][param_name]
 
         return True
 
@@ -771,21 +774,19 @@ class Workflow:
                     Log.an().error(msg)
                     return self._fatal(msg)
 
-                # run jobs for step
+                # run new jobs and poll until all job(s) done
                 Log.some().info('[%s]: running', node_name)
-                if not node['node'].run():
-                    msg = 'run failed for step {}'.format(node_name)
-                    Log.an().error(msg)
-                    return self._fatal(msg)
-
-                # poll until job(s) done
                 while not node['node'].all_done():
+                    if not node['node'].run():
+                        msg = 'run failed for step {}'.format(node_name)
+                        Log.an().error(msg)
+                        return self._fatal(msg)
                     node['node'].check_running_jobs()
                     time.sleep(self._config['run_poll_delay'])
 
                 Log.some().debug('[%s]: all jobs complete', node_name)
 
-                # check1 if step satisfies checkpoint of all, any, or none job completion
+                # check if step satisfies checkpoint of all, any, or none job completion
                 if not node['node'].checkpoint():
                     msg = 'failed checkpoint for step {}'.format(node_name)
                     Log.an().error(msg)
@@ -830,7 +831,6 @@ class Workflow:
                     return self._fatal(msg)
 
                 Log.some().info('[%s]: complete', node_name)
-
 
         self._update_status_db('FINISHED', '')
 

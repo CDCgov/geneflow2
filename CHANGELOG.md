@@ -1,6 +1,13 @@
 # Changelog
 
 
+## 2021/06/01 - v2.6.0: enhancement release
+
+1. Add support for throttling number of simultaneous jobs.
+
+2. Fix bug: correctly handle default and step-specific execution parameters.
+
+
 ## 2021/05/19 - v2.5.0: enhancement release
 
 1. Add 'inclusive' option to map URI.

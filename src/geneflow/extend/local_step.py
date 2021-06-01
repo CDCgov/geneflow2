@@ -316,7 +316,8 @@ class LocalStep(WorkflowStep):
 
     def run(self):
         """
-        Execute shell scripts for each of the map items.
+        Execute shell scripts for each of the map items, as long as
+        number of running jobs is < throttle limit.
 
         Then store PIDs in run detail.
 
@@ -328,13 +329,29 @@ class LocalStep(WorkflowStep):
             On failure: False.
 
         """
-        for map_item in self._map:
+        if self._throttle_limit > 0 and self._num_running >= self._throttle_limit:
+            # throttle limit reached
+            # exit without running anything new
+            return True
 
-            if not self._run_map(map_item):
-                msg = 'cannot run script for map item "{}"'\
-                    .format(map_item['filename'])
-                Log.an().error(msg)
-                return self._fatal(msg)
+        for map_item in self._map:
+            if map_item['status'] == 'PENDING':
+                if not self._run_map(map_item):
+                    msg = 'cannot run script for map item "{}"'\
+                        .format(map_item['filename'])
+                    Log.an().error(msg)
+                    map_item['status'] = 'FAILED'
+                    map_item['run'][map_item['attempt']]['status']\
+                        = map_item['status']
+
+                else:
+                    self._num_running += 1
+                    if (
+                        self._throttle_limit > 0
+                        and self._num_running >= self._throttle_limit
+                    ):
+                        # reached throttle limit
+                        break
 
         self._update_status_db('RUNNING', '')
 
@@ -357,8 +374,8 @@ class LocalStep(WorkflowStep):
         return {
             map_item['filename']: [
                 {
-                    'status': run_item['status'],
-                    'pid': run_item['pid']
+                    'status': run_item.get('status', 'PENDING'),
+                    'pid': run_item.get('pid', 0)
                 } for run_item in map_item['run']
             ] for map_item in self._map
         }
@@ -377,24 +394,37 @@ class LocalStep(WorkflowStep):
         """
         # check if procs are running, finished, or failed
         for map_item in self._map:
-            try:
-                if ShellWrapper.is_running(
-                        map_item['run'][map_item['attempt']]['proc']
-                ):
-                    map_item['status'] = 'RUNNING'
-                else:
-                    if map_item['run'][map_item['attempt']]['proc'].returncode:
-                        map_item['status'] = 'FAILED'
-                    else:
-                        map_item['status'] = 'FINISHED'
+            if map_item['status'] in ['RUNNING','UNKNOWN']:
+                try:
+                    if not ShellWrapper.is_running(
+                            map_item['run'][map_item['attempt']]['proc']
+                    ):
+                        returncode = map_item['run'][map_item['attempt']]['proc'].returncode
+                        if returncode:
+                            map_item['status'] = 'FAILED'
+                        else:
+                            map_item['status'] = 'FINISHED'
+
+                        Log.a().debug(
+                            '[step.%s]: exit status: %s -> %s',
+                            self._step['name'],
+                            map_item['template']['output'],
+                            returncode
+                        )
+
+                        # decrease num running procs
+                        if self._num_running > 0:
+                            self._num_running -= 1
+
+                except (OSError, AttributeError) as err:
+                    Log.a().warning(
+                        'process polling failed for map item "%s" [%s]',
+                        map_item['filename'], str(err)
+                    )
+                    map_item['status'] = 'UNKNOWN'
+
                 map_item['run'][map_item['attempt']]['status']\
                     = map_item['status']
-            except (OSError, AttributeError) as err:
-                Log.a().warning(
-                    'process polling failed for map item "%s" [%s]',
-                    map_item['filename'], str(err)
-                )
-                map_item['status'] = 'FAILED'
 
         self._update_status_db(self._status, '')
 
